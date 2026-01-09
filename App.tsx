@@ -1,22 +1,60 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { DiscountType, PaymentMethod, SktPlan, SktDevice, CalculatorState } from './types';
+import { DiscountType, PaymentMethod, SktPlan, SktDevice, CalculatorState, DeviceCategory } from './types';
 
-const STORAGE_KEY_DEVICES = 'skt_opt_devices_v3';
-const STORAGE_KEY_PLANS = 'skt_opt_plans_v3';
+const STORAGE_KEY_DEVICES = 'skt_opt_devices_v4';
+const STORAGE_KEY_PLANS = 'skt_opt_plans_v4';
 
 const DEFAULT_DEVICES: SktDevice[] = [
-  { id: 's25-ultra', name: '갤럭시 S25 울트라 (512GB)', price: 1698400, order: 1 },
-  { id: 's25-plus', name: '갤럭시 S25 플러스 (256GB)', price: 1353000, order: 2 },
-  { id: 's25-base', name: '갤럭시 S25 (256GB)', price: 1155000, order: 3 },
+  { id: 's25-ultra', name: '갤럭시 S25 울트라 (512GB)', price: 1841400, category: 's-series', order: 16 },
+  { id: 's25-plus', name: '갤럭시 S25 플러스 (256GB)', price: 1353000, category: 's-series', order: 13 },
+  { id: 's25-base', name: '갤럭시 S25 (256GB)', price: 1155000, category: 's-series', order: 11 },
+  { id: 'dev-1767915282122', name: 'iPhone 17 ProMax (512GB)', price: 2288000, category: 'apple', order: 80 },
+  { id: 'dev-1767915303673', name: 'iPhone 17 ProMax (256GB)', price: 1980000, category: 'apple', order: 79 },
+  { id: 'dev-1767915327593', name: 'iPhone 17 Pro (512GB)', price: 2090000, category: 'apple', order: 76 },
+  { id: 'dev-1767915340737', name: 'iPhone 17 Pro (256GB)', price: 1782000, category: 'apple', order: 75 },
+  { id: 'dev-1767915359969', name: 'iPhone Air (512GB)', price: 1881000, category: 'apple', order: 74 },
+  { id: 'dev-1767915389512', name: 'iPhone Air (256GB)', price: 1584000, category: 'apple', order: 73 },
+  { id: 'dev-1767915429280', name: 'iPhone 17 (256GB)', price: 1287000, category: 'apple', order: 71 },
+  { id: 'dev-1767915442264', name: 'iPhone 17 (512GB)', price: 1584000, category: 'apple', order: 72 },
+  { id: 'dev-1767915493279', name: '갤럭시 Z 폴드7 (256GB)', price: 2379300, category: 'foldable', order: 2 },
+  { id: 'dev-1767915504591', name: '갤럭시 Z 폴드7 (512GB)', price: 2537700, category: 'foldable', order: 1 },
+  { id: 'dev-1767915524863', name: '갤럭시 Z 플립7 (256GB)', price: 1485000, category: 'foldable', order: 3 },
+  { id: 'dev-1767915570366', name: '갤럭시 Z 플립7 (512GB)', price: 1643400, category: 'foldable', order: 4 },
+  { id: 'dev-1767915712564', name: '갤럭시 S25 (512GB)', price: 1298000, category: 's-series', order: 12 },
+  { id: 'dev-1767915766460', name: '갤럭시 S25 플러스 (512GB)', price: 1474000, category: 's-series', order: 14 },
+  { id: 'dev-1767916003353', name: '갤럭시 S25 울트라 (256GB)', price: 1698400, category: 's-series', order: 15 },
+  { id: 'dev-1767916109151', name: '갤럭시 S25 FE (256GB)', price: 946000, category: 's-series', order: 10 },
+  { id: 'dev-1767916167575', name: '갤럭시 퀀텀6', price: 618200, category: 'a-series', order: 21 },
+  { id: 'dev-1767916206734', name: '갤럭시 와이드8 (128GB)', price: 374000, category: 'a-series', order: 23 },
+  { id: 'dev-1767916247917', name: '갤럭시 A17 LTE (128GB)', price: 319000, category: 'a-series', order: 26 },
+  { id: 'dev-1767917169762', name: '갤럭시 S25 엣지 (256GB)', price: 1496000, category: 's-series', order: 17 },
+  { id: 'dev-1767917190001', name: '갤럭시 S25 엣지 (512GB)', price: 1639000, category: 's-series', order: 18 },
 ];
 
 const DEFAULT_PLANS: SktPlan[] = [
-  { id: '5gx-premium', name: '5GX 프리미엄', price: 125000, subsidy: { 's25-ultra': 520000, 's25-plus': 480000, 's25-base': 450000 } },
-  { id: '5gx-prime-plus', name: '5GX 프라임플러스', price: 109000, subsidy: { 's25-ultra': 480000, 's25-plus': 440000, 's25-base': 400000 } },
-  { id: '5gx-prime', name: '5GX 프라임', price: 89000, subsidy: { 's25-ultra': 420000, 's25-plus': 380000, 's25-base': 350000 } },
-  { id: '5gx-regular', name: '5GX 레귤러', price: 69000, subsidy: { 's25-ultra': 300000, 's25-plus': 280000, 's25-base': 250000 } },
-  { id: '5gx-slim', name: '5GX 슬림', price: 55000, subsidy: { 's25-ultra': 200000, 's25-plus': 180000, 's25-base': 150000 } },
+  { id: '5gx-premium', name: '5GX 프리미엄', price: 109000, subsidy: { 's25-ultra': 500000, 's25-plus': 500000, 's25-base': 500000, 'z-fold6': 550000, 'z-flip6': 500000, 'iphone-16-pro': 200000, 'galaxy-a35': 350000, 'dev-1767915282122': 220000, 'dev-1767915303673': 220000, 'dev-1767915327593': 450000, 'dev-1767915340737': 450000, 'dev-1767915359969': 450000, 'dev-1767915389512': 450000, 'dev-1767915429280': 450000, 'dev-1767915442264': 450000, 'dev-1767915493279': 500000, 'dev-1767915504591': 500000, 'dev-1767915524863': 600000, 'dev-1767915570366': 600000, 'dev-1767915712564': 500000, 'dev-1767915766460': 500000, 'dev-1767916003353': 500000, 'dev-1767916109151': 530000, 'dev-1767916167575': 357000, 'dev-1767916206734': 293400, 'dev-1767916247917': 130000, 'dev-1767917169762': 600000, 'dev-1767917190001': 600000 } },
+  { id: '5gx-prime-plus', name: '5GX 프라임플러스', price: 99000, subsidy: { 's25-ultra': 490000, 's25-plus': 490000, 's25-base': 490000, 'z-fold6': 510000, 'z-flip6': 460000, 'iphone-16-pro': 180000, 'galaxy-a35': 320000, 'dev-1767915282122': 180000, 'dev-1767915303673': 180000, 'dev-1767915327593': 430000, 'dev-1767915340737': 430000, 'dev-1767915359969': 430000, 'dev-1767915389512': 430000, 'dev-1767915429280': 430000, 'dev-1767915442264': 430000, 'dev-1767915493279': 490000, 'dev-1767915504591': 490000, 'dev-1767915524863': 590000, 'dev-1767915570366': 590000, 'dev-1767915712564': 490000, 'dev-1767915766460': 490000, 'dev-1767916003353': 490000, 'dev-1767916109151': 500000, 'dev-1767916167575': 340000, 'dev-1767916206734': 293400, 'dev-1767916247917': 130000, 'dev-1767917169762': 590000, 'dev-1767917190001': 590000 } },
+  { id: '5gx-prime', name: '5GX 프라임', price: 89000, subsidy: { 's25-ultra': 480000, 's25-plus': 480000, 's25-base': 480000, 'z-fold6': 450000, 'z-flip6': 400000, 'iphone-16-pro': 150000, 'galaxy-a35': 280000, 'dev-1767915282122': 150000, 'dev-1767915303673': 150000, 'dev-1767915327593': 420000, 'dev-1767915340737': 420000, 'dev-1767915359969': 420000, 'dev-1767915389512': 420000, 'dev-1767915429280': 420000, 'dev-1767915442264': 420000, 'dev-1767915493279': 480000, 'dev-1767915504591': 480000, 'dev-1767915524863': 580000, 'dev-1767915570366': 580000, 'dev-1767915712564': 480000, 'dev-1767915766460': 480000, 'dev-1767916003353': 480000, 'dev-1767916109151': 480000, 'dev-1767916167575': 320000, 'dev-1767916206734': 293400, 'dev-1767916247917': 130000, 'dev-1767917169762': 580000, 'dev-1767917190001': 580000 } },
+  { id: '5gx-regular', name: '5GX 레귤러', price: 69000, subsidy: { 's25-ultra': 420000, 's25-plus': 420000, 's25-base': 420000, 'z-fold6': 320000, 'z-flip6': 280000, 'iphone-16-pro': 100000, 'galaxy-a35': 200000, 'dev-1767915282122': 118000, 'dev-1767915303673': 118000, 'dev-1767915327593': 360000, 'dev-1767915340737': 360000, 'dev-1767915359969': 360000, 'dev-1767915389512': 360000, 'dev-1767915429280': 360000, 'dev-1767915442264': 360000, 'dev-1767915493279': 420000, 'dev-1767915504591': 420000, 'dev-1767915524863': 520000, 'dev-1767915570366': 520000, 'dev-1767915712564': 420000, 'dev-1767915766460': 420000, 'dev-1767916003353': 420000, 'dev-1767916109151': 355000, 'dev-1767916167575': 248000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 520000, 'dev-1767917190001': 520000 } },
+  { id: '5gx-slim', name: '5GX 슬림', price: 55000, subsidy: { 's25-ultra': 370000, 's25-plus': 370000, 's25-base': 370000, 'z-fold6': 220000, 'z-flip6': 180000, 'iphone-16-pro': 80000, 'galaxy-a35': 150000, 'dev-1767915282122': 107000, 'dev-1767915303673': 107000, 'dev-1767915327593': 310000, 'dev-1767915340737': 310000, 'dev-1767915359969': 310000, 'dev-1767915389512': 310000, 'dev-1767915429280': 310000, 'dev-1767915442264': 310000, 'dev-1767915493279': 370000, 'dev-1767915504591': 370000, 'dev-1767915524863': 470000, 'dev-1767915570366': 470000, 'dev-1767915712564': 370000, 'dev-1767915766460': 370000, 'dev-1767916003353': 370000, 'dev-1767916109151': 316000, 'dev-1767916167575': 230000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 470000, 'dev-1767917190001': 470000 } },
+  { id: 'plan-1767916389004', name: '5GX 레귤러플러스', price: 79000, subsidy: { 's25-ultra': 453000, 's25-plus': 453000, 's25-base': 453000, 'iphone-16-pro': 374000, 'dev-1767915282122': 135000, 'dev-1767915303673': 135000, 'dev-1767915327593': 393000, 'dev-1767915340737': 393000, 'dev-1767915359969': 393000, 'dev-1767915389512': 393000, 'dev-1767915429280': 393000, 'dev-1767915442264': 393000, 'dev-1767915493279': 453000, 'dev-1767915504591': 453000, 'dev-1767915524863': 553000, 'dev-1767915570366': 553000, 'dev-1767915712564': 453000, 'dev-1767915766460': 453000, 'dev-1767916003353': 453000, 'dev-1767916109151': 425000, 'dev-1767916167575': 283000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 553000, 'dev-1767917190001': 553000 } },
+  { id: 'plan-1767916423859', name: '5GX 베이직플러스', price: 59000, subsidy: { 's25-ultra': 395000, 's25-plus': 395000, 's25-base': 395000, 'iphone-16-pro': 255000, 'dev-1767915282122': 112000, 'dev-1767915303673': 112000, 'dev-1767915327593': 335000, 'dev-1767915340737': 335000, 'dev-1767915359969': 335000, 'dev-1767915389512': 335000, 'dev-1767915429280': 335000, 'dev-1767915442264': 335000, 'dev-1767915493279': 395000, 'dev-1767915504591': 395000, 'dev-1767915524863': 495000, 'dev-1767915570366': 495000, 'dev-1767915712564': 395000, 'dev-1767915766460': 395000, 'dev-1767916003353': 395000, 'dev-1767916109151': 336000, 'dev-1767916167575': 239000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 495000, 'dev-1767917190001': 495000 } },
+  { id: 'plan-1767916466435', name: '5GX 베이직', price: 49000, subsidy: { 's25-ultra': 333000, 's25-plus': 333000, 's25-base': 333000, 'iphone-16-pro': 255000, 'dev-1767915282122': 100000, 'dev-1767915303673': 100000, 'dev-1767915327593': 273000, 'dev-1767915340737': 273000, 'dev-1767915359969': 273000, 'dev-1767915389512': 273000, 'dev-1767915429280': 273000, 'dev-1767915442264': 273000, 'dev-1767915493279': 333000, 'dev-1767915504591': 333000, 'dev-1767915524863': 433000, 'dev-1767915570366': 433000, 'dev-1767915712564': 333000, 'dev-1767915766460': 333000, 'dev-1767916003353': 333000, 'dev-1767916109151': 287000, 'dev-1767916167575': 215000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 433000, 'dev-1767917190001': 433000 } },
+  { id: 'plan-1767916494610', name: '5GX 컴팩트플러스', price: 45000, subsidy: { 's25-ultra': 315000, 's25-plus': 315000, 's25-base': 315000, 'iphone-16-pro': 255000, 'dev-1767915282122': 88000, 'dev-1767915303673': 88000, 'dev-1767915327593': 255000, 'dev-1767915340737': 255000, 'dev-1767915359969': 255000, 'dev-1767915389512': 255000, 'dev-1767915429280': 255000, 'dev-1767915442264': 255000, 'dev-1767915493279': 310000, 'dev-1767915504591': 310000, 'dev-1767915524863': 410000, 'dev-1767915570366': 410000, 'dev-1767915712564': 315000, 'dev-1767915766460': 315000, 'dev-1767916003353': 315000, 'dev-1767916109151': 265000, 'dev-1767916167575': 195000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 415000, 'dev-1767917190001': 415000 } },
+  { id: 'plan-1767916505570', name: '0틴5G', price: 45000, subsidy: { 's25-ultra': 315000, 's25-plus': 315000, 's25-base': 315000, 'iphone-16-pro': 255000, 'dev-1767915282122': 88000, 'dev-1767915303673': 88000, 'dev-1767915327593': 255000, 'dev-1767915340737': 255000, 'dev-1767915359969': 255000, 'dev-1767915389512': 255000, 'dev-1767915429280': 255000, 'dev-1767915442264': 255000, 'dev-1767915493279': 310000, 'dev-1767915504591': 310000, 'dev-1767915524863': 410000, 'dev-1767915570366': 410000, 'dev-1767915712564': 315000, 'dev-1767915766460': 315000, 'dev-1767916003353': 315000, 'dev-1767916109151': 265000, 'dev-1767916167575': 195000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 415000, 'dev-1767917190001': 415000 } },
+  { id: 'plan-1767916528994', name: '5GX 컴팩트', price: 39000, subsidy: { 's25-ultra': 0, 's25-plus': 0, 's25-base': 0, 'iphone-16-pro': 255000, 'dev-1767915282122': 0, 'dev-1767915303673': 0, 'dev-1767915327593': 0, 'dev-1767915340737': 0, 'dev-1767915359969': 0, 'dev-1767915389512': 0, 'dev-1767915429280': 0, 'dev-1767915442264': 0, 'dev-1767915493279': 0, 'dev-1767915504591': 0, 'dev-1767915524863': 0, 'dev-1767915570366': 0, 'dev-1767915712564': 0, 'dev-1767915766460': 0, 'dev-1767916003353': 0, 'dev-1767916109151': 0, 'dev-1767916167575': 0, 'dev-1767916206734': 285000, 'dev-1767916247917': 88000, 'dev-1767917169762': 0, 'dev-1767917190001': 0 } },
+  { id: 'plan-1767916543506', name: 'T플랜세이브', price: 33000, subsidy: { 's25-ultra': 0, 's25-plus': 0, 's25-base': 0, 'iphone-16-pro': 255000, 'dev-1767915282122': 0, 'dev-1767915303673': 0, 'dev-1767915327593': 0, 'dev-1767915340737': 0, 'dev-1767915359969': 0, 'dev-1767915389512': 0, 'dev-1767915429280': 0, 'dev-1767915442264': 0, 'dev-1767915493279': 0, 'dev-1767915504591': 0, 'dev-1767915524863': 0, 'dev-1767915570366': 0, 'dev-1767915712564': 0, 'dev-1767915766460': 0, 'dev-1767916003353': 0, 'dev-1767916109151': 0, 'dev-1767916167575': 0, 'dev-1767916206734': 270000, 'dev-1767916247917': 88000, 'dev-1767917169762': 0, 'dev-1767917190001': 0 } },
+  { id: 'plan-1767916558442', name: 'Zem플랜베스트', price: 26000, subsidy: { 's25-ultra': 0, 's25-plus': 0, 's25-base': 0, 'iphone-16-pro': 255000, 'dev-1767915282122': 0, 'dev-1767915303673': 0, 'dev-1767915327593': 0, 'dev-1767915340737': 0, 'dev-1767915359969': 0, 'dev-1767915389512': 0, 'dev-1767915429280': 0, 'dev-1767915442264': 0, 'dev-1767915493279': 0, 'dev-1767915504591': 0, 'dev-1767915524863': 0, 'dev-1767915570366': 0, 'dev-1767915712564': 0, 'dev-1767915766460': 0, 'dev-1767916003353': 0, 'dev-1767916109151': 0, 'dev-1767916167575': 0, 'dev-1767916206734': 270000, 'dev-1767916247917': 88000, 'dev-1767917169762': -2, 'dev-1767917190001': 0 } },
+  { id: 'plan-1767916567289', name: 'Zem플랜스마트', price: 19800, subsidy: { 's25-ultra': 0, 's25-plus': 0, 's25-base': 0, 'iphone-16-pro': 255000, 'dev-1767915282122': 0, 'dev-1767915303673': 0, 'dev-1767915327593': -2, 'dev-1767915340737': 0, 'dev-1767915359969': 0, 'dev-1767915389512': 0, 'dev-1767915429280': 0, 'dev-1767915442264': 0, 'dev-1767915493279': 0, 'dev-1767915504591': 0, 'dev-1767915524863': 0, 'dev-1767915570366': 0, 'dev-1767915712564': 0, 'dev-1767915766460': 0, 'dev-1767916003353': 0, 'dev-1767916109151': -1, 'dev-1767916167575': 0, 'dev-1767916206734': 270000, 'dev-1767916247917': 88000, 'dev-1767917169762': 224000, 'dev-1767917190001': 245000 } },
+];
+
+
+const CATEGORIES = [
+  { id: 'foldable', name: '폴더블', icon: 'fa-mobile-v' },
+  { id: 's-series', name: '갤럭시 S', icon: 'fa-bolt' },
+  { id: 'a-series', name: '갤럭시 A', icon: 'fa-wallet' },
+  { id: 'apple', name: '애플', icon: 'fa-apple' }
 ];
 
 const App: React.FC = () => {
@@ -34,32 +72,48 @@ const App: React.FC = () => {
   const [loginId, setLoginId] = useState('');
   const [loginPw, setLoginPw] = useState('');
 
+  const [userCategory, setUserCategory] = useState<DeviceCategory>('s-series');
+
   const [newDeviceName, setNewDeviceName] = useState('');
   const [newDevicePrice, setNewDevicePrice] = useState<number | ''>('');
   const [newDeviceOrder, setNewDeviceOrder] = useState<number | ''>('');
+  const [newDeviceCategory, setNewDeviceCategory] = useState<DeviceCategory>('s-series');
+  const [autoCalculateSubsidy, setAutoCalculateSubsidy] = useState(true);
+  
   const [newPlanName, setNewPlanName] = useState('');
   const [newPlanPrice, setNewPlanPrice] = useState<number | ''>('');
+  const [showExportModal, setShowExportModal] = useState(false);
 
-  // Sorted devices based on 'order' property
   const sortedDevices = useMemo(() => {
     return [...devices].sort((a, b) => (a.order || 999) - (b.order || 999));
   }, [devices]);
 
-  // Sorted plans based on 'price' descending
   const sortedPlans = useMemo(() => {
     return [...plans].sort((a, b) => b.price - a.price);
   }, [plans]);
 
+  const filteredDevicesForUser = useMemo(() => {
+    return sortedDevices.filter(d => d.category === userCategory);
+  }, [sortedDevices, userCategory]);
+
   const [state, setState] = useState<CalculatorState>({
-    deviceId: sortedDevices[0]?.id || 's25-ultra',
-    initialPlanId: sortedPlans[0]?.id || '5gx-premium',
-    afterPlanId: sortedPlans[sortedPlans.length - 1]?.id || '5gx-slim',
+    deviceId: sortedDevices.find(d => d.category === 's-series')?.id || sortedDevices[0]?.id || '',
+    initialPlanId: sortedPlans[0]?.id || '',
+    afterPlanId: sortedPlans[sortedPlans.length - 1]?.id || '',
     discountType: DiscountType.CONTRACT,
     paymentMethod: PaymentMethod.INSTALLMENT,
     employeeDiscount: 0,
     useFamilyDiscount: false,
     maintenanceMonths: 4,
   });
+
+  const handleCategoryChange = (cat: DeviceCategory) => {
+    setUserCategory(cat);
+    const firstDeviceInCat = sortedDevices.find(d => d.category === cat);
+    if (firstDeviceInCat) {
+      setState(prev => ({ ...prev, deviceId: firstDeviceInCat.id }));
+    }
+  };
 
   useEffect(() => {
     const months = state.discountType === DiscountType.SUBSIDY ? 6 : 4;
@@ -77,10 +131,8 @@ const App: React.FC = () => {
 
   const results = useMemo(() => {
     if (!selectedDevice || !initialPlan || !afterPlan) return null;
-
     const subsidy = state.discountType === DiscountType.SUBSIDY ? (initialPlan.subsidy[selectedDevice.id] || 0) : 0;
     const principal = Math.max(0, selectedDevice.price - subsidy - state.employeeDiscount);
-
     let monthlyInstallment = 0;
     let totalInterest = 0;
     if (state.paymentMethod === PaymentMethod.INSTALLMENT && principal > 0) {
@@ -89,94 +141,95 @@ const App: React.FC = () => {
       monthlyInstallment = Math.floor(principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
       totalInterest = (monthlyInstallment * n) - principal;
     }
-
     const calcFee = (plan: SktPlan) => {
       const contractDiscount = state.discountType === DiscountType.CONTRACT ? Math.floor(plan.price * 0.25) : 0;
       const familyDiscount = state.useFamilyDiscount ? Math.floor(plan.price * 0.30) : 0;
       const finalFee = Math.max(0, plan.price - contractDiscount - familyDiscount);
       return { finalFee, contractDiscount, familyDiscount };
     };
-
     const initialFeeData = calcFee(initialPlan);
     const afterFeeData = calcFee(afterPlan);
-
     const m1 = initialFeeData.finalFee + monthlyInstallment;
     const m2 = afterFeeData.finalFee + monthlyInstallment;
     const maintenance = state.maintenanceMonths;
     const remaining = 24 - maintenance;
-    
     let total2Year = (m1 * maintenance) + (m2 * remaining);
-    
     if (state.paymentMethod === PaymentMethod.LUMP_SUM) {
       total2Year = principal + (initialFeeData.finalFee * maintenance) + (afterFeeData.finalFee * remaining);
     }
-
-    return {
-      principal,
-      subsidy,
-      monthlyInstallment,
-      totalInterest,
-      initial: { ...initialFeeData, total: m1 },
-      after: { ...afterFeeData, total: m2 },
-      total2Year
-    };
+    return { principal, subsidy, monthlyInstallment, totalInterest, initial: { ...initialFeeData, total: m1 }, after: { ...afterFeeData, total: m2 }, total2Year };
   }, [state, selectedDevice, initialPlan, afterPlan]);
 
   const formatKrw = (val: number) => new Intl.NumberFormat('ko-KR').format(val) + '원';
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loginId === 'just208' && loginPw === 'skbnt082') {
-      setIsAdmin(true);
-      setShowLogin(false);
-      setLoginId('');
-      setLoginPw('');
-    } else {
-      alert('아이디 또는 비밀번호가 올바르지 않습니다.');
-    }
+  const estimateSubsidy = (devicePrice: number, planPrice: number): number => {
+    let ratio = 0;
+    if (planPrice >= 120000) ratio = 0.32;
+    else if (planPrice >= 89000) ratio = 0.28;
+    else if (planPrice >= 69000) ratio = 0.22;
+    else ratio = 0.15;
+    let estimated = Math.floor((devicePrice * ratio) / 1000) * 1000;
+    const maxSubsidy = devicePrice > 1500000 ? 600000 : 500000;
+    return Math.min(estimated, maxSubsidy);
   };
 
   const addDevice = () => {
     if (newDeviceName && typeof newDevicePrice === 'number') {
+      const deviceId = `dev-${Date.now()}`;
       const order = typeof newDeviceOrder === 'number' ? newDeviceOrder : devices.length + 1;
-      setDevices([...devices, { id: `dev-${Date.now()}`, name: newDeviceName, price: newDevicePrice, order }]);
-      setNewDeviceName('');
-      setNewDevicePrice('');
-      setNewDeviceOrder('');
+      const newDevice: SktDevice = { id: deviceId, name: newDeviceName, price: newDevicePrice, category: newDeviceCategory, order };
+      if (autoCalculateSubsidy) {
+        const updatedPlans = plans.map(p => ({
+          ...p,
+          subsidy: { ...p.subsidy, [deviceId]: estimateSubsidy(newDevicePrice, p.price) }
+        }));
+        setPlans(updatedPlans);
+      }
+      setDevices([...devices, newDevice]);
+      setNewDeviceName(''); setNewDevicePrice(''); setNewDeviceOrder('');
     }
   };
 
   const addPlan = () => {
     if (newPlanName && typeof newPlanPrice === 'number') {
-      setPlans([...plans, { id: `plan-${Date.now()}`, name: newPlanName, price: newPlanPrice, subsidy: {} }]);
-      setNewPlanName('');
-      setNewPlanPrice('');
+      const newSubsidy: Record<string, number> = {};
+      devices.forEach(d => { newSubsidy[d.id] = estimateSubsidy(d.price, newPlanPrice as number); });
+      setPlans([...plans, { id: `plan-${Date.now()}`, name: newPlanName, price: newPlanPrice, subsidy: newSubsidy }]);
+      setNewPlanName(''); setNewPlanPrice('');
     }
   };
 
-  const updateDeviceOrder = (id: string, order: number) => {
-    setDevices(devices.map(d => d.id === id ? { ...d, order } : d));
+  const formatAsCode = (data: any[], type: 'SktDevice' | 'SktPlan') => {
+    const lines = data.map(item => {
+      const entries = Object.entries(item).map(([key, value]) => {
+        let formattedValue = value;
+        if (typeof value === 'string') { formattedValue = `'${value}'`; }
+        else if (typeof value === 'object' && value !== null) {
+          const innerEntries = Object.entries(value).map(([k, v]) => `'${k}': ${v}`);
+          formattedValue = `{ ${innerEntries.join(', ')} }`;
+        }
+        return `${key}: ${formattedValue}`;
+      });
+      return `  { ${entries.join(', ')} },`;
+    });
+    return `const DEFAULT_${type === 'SktDevice' ? 'DEVICES' : 'PLANS'}: ${type}[] = [\n${lines.join('\n')}\n];`;
   };
 
-  const updateDevicePrice = (id: string, price: number) => {
-    setDevices(devices.map(d => d.id === id ? { ...d, price } : d));
+  const getExportCode = () => `${formatAsCode(devices, 'SktDevice')}\n\n${formatAsCode(plans, 'SktPlan')}`;
+  const copyToClipboard = () => { navigator.clipboard.writeText(getExportCode()); alert('소스 코드가 클립보드에 복사되었습니다.'); };
+  const updateDeviceOrder = (id: string, order: number) => setDevices(devices.map(d => d.id === id ? { ...d, order } : d));
+  const updateDevicePrice = (id: string, price: number) => setDevices(devices.map(d => d.id === id ? { ...d, price } : d));
+  const updateDeviceCategory = (id: string, category: DeviceCategory) => setDevices(devices.map(d => d.id === id ? { ...d, category } : d));
+  const updatePlanPrice = (id: string, price: number) => setPlans(plans.map(p => p.id === id ? { ...p, price } : p));
+  const updateSubsidy = (planId: string, deviceId: string, value: number) => setPlans(plans.map(p => p.id === planId ? { ...p, subsidy: { ...p.subsidy, [deviceId]: value } } : p));
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginId === 'just208' && loginPw === 'skbnt082') { setIsAdmin(true); setShowLogin(false); setLoginId(''); setLoginPw(''); }
+    else { alert('아이디 또는 비밀번호가 올바르지 않습니다.'); }
   };
 
-  const updatePlanPrice = (id: string, price: number) => {
-    setPlans(plans.map(p => p.id === id ? { ...p, price } : p));
-  };
-
-  const updateSubsidy = (planId: string, deviceId: string, value: number) => {
-    setPlans(plans.map(p => p.id === planId ? { ...p, subsidy: { ...p.subsidy, [deviceId]: value } } : p));
-  };
-
-  const resetData = () => {
-    if (confirm('모든 데이터를 초기 설정으로 되돌리시겠습니까?')) {
-      localStorage.removeItem(STORAGE_KEY_DEVICES);
-      localStorage.removeItem(STORAGE_KEY_PLANS);
-      window.location.reload();
-    }
-  };
+  const resetData = () => { if (confirm('모든 데이터를 초기 설정으로 되돌리시겠습니까?')) { localStorage.removeItem(STORAGE_KEY_DEVICES); localStorage.removeItem(STORAGE_KEY_PLANS); window.location.reload(); } };
 
   if (!results) return null;
 
@@ -188,16 +241,11 @@ const App: React.FC = () => {
             <div className="w-14 h-14 bg-gradient-to-tr from-[#E2000F] to-[#F37321] rounded-2xl flex items-center justify-center text-white font-black text-3xl shadow-lg">T</div>
             <div>
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">SKT 최적 설계 계산기</h1>
-              <p className="text-xs text-[#E2000F] font-black uppercase tracking-widest">Premium Consulting System</p>
+              <p className="text-xs text-[#E2000F] font-black uppercase tracking-widest">Professional AI Consulting</p>
             </div>
           </div>
           {isAdmin && (
-            <button 
-              onClick={() => setIsAdmin(false)}
-              className="px-6 py-3 rounded-2xl text-sm font-black bg-slate-800 text-white transition-all shadow-md hover:bg-slate-700"
-            >
-              관리 종료
-            </button>
+            <button onClick={() => setIsAdmin(false)} className="px-6 py-3 rounded-2xl text-sm font-black bg-slate-800 text-white transition-all shadow-md hover:bg-slate-700">관리 종료</button>
           )}
         </div>
       </header>
@@ -207,20 +255,8 @@ const App: React.FC = () => {
           <div className="bg-white rounded-[2rem] p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
             <h2 className="text-2xl font-black text-slate-900 mb-6 text-center">관리자 로그인</h2>
             <form onSubmit={handleLogin} className="space-y-4">
-              <input 
-                type="text" 
-                placeholder="아이디" 
-                className="w-full px-6 py-4 rounded-2xl border-4 border-slate-100 focus:border-[#E2000F] outline-none font-bold transition-all"
-                value={loginId}
-                onChange={(e) => setLoginId(e.target.value)}
-              />
-              <input 
-                type="password" 
-                placeholder="비밀번호" 
-                className="w-full px-6 py-4 rounded-2xl border-4 border-slate-100 focus:border-[#E2000F] outline-none font-bold transition-all"
-                value={loginPw}
-                onChange={(e) => setLoginPw(e.target.value)}
-              />
+              <input type="text" placeholder="아이디" className="w-full px-6 py-4 rounded-2xl border-4 border-slate-100 focus:border-[#E2000F] outline-none font-bold transition-all" value={loginId} onChange={(e) => setLoginId(e.target.value)} />
+              <input type="password" placeholder="비밀번호" className="w-full px-6 py-4 rounded-2xl border-4 border-slate-100 focus:border-[#E2000F] outline-none font-bold transition-all" value={loginPw} onChange={(e) => setLoginPw(e.target.value)} />
               <div className="flex gap-4 pt-2">
                 <button type="button" onClick={() => setShowLogin(false)} className="flex-1 py-4 rounded-2xl bg-slate-100 text-slate-600 font-black hover:bg-slate-200 transition-all">취소</button>
                 <button type="submit" className="flex-1 py-4 rounded-2xl bg-[#E2000F] text-white font-black hover:bg-red-700 transition-all shadow-lg">로그인</button>
@@ -232,386 +268,204 @@ const App: React.FC = () => {
 
       {isAdmin ? (
         <div className="max-w-6xl mx-auto p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 flex-1">
-          {/* Device Management Section */}
+          {/* Export Code Section */}
+          <div className="bg-slate-900 rounded-3xl p-8 shadow-2xl border-4 border-slate-800 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-10 opacity-10"><i className="fas fa-code text-8xl text-white"></i></div>
+            <div className="relative z-10">
+              <h2 className="text-xl font-black text-white mb-2 flex items-center gap-2"><i className="fas fa-file-code text-blue-400"></i> 시스템 데이터 추출</h2>
+              <p className="text-slate-400 text-sm mb-6">현재 설정을 소스 코드 상수에 반영하려면 아래 코드를 복사하세요.</p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button onClick={() => setShowExportModal(true)} className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black transition-all flex items-center gap-2 shadow-lg shadow-blue-900/40"><i className="fas fa-eye"></i> 코드 보기</button>
+                <button onClick={copyToClipboard} className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-black transition-all flex items-center gap-2"><i className="fas fa-copy"></i> 클립보드 복사</button>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-3xl shadow-xl border-2 border-slate-200 overflow-hidden">
             <div className="bg-slate-100 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-2 border-slate-200">
-              <h2 className="text-xl font-black text-slate-900 flex items-center gap-2"><i className="fas fa-mobile-screen"></i> 단말기 관리</h2>
-              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                <input 
-                  type="number" placeholder="순번" className="w-16 px-3 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm outline-none focus:border-[#E2000F]"
-                  value={newDeviceOrder} onChange={e => setNewDeviceOrder(e.target.value === '' ? '' : Number(e.target.value))}
-                />
-                <input 
-                  type="text" placeholder="모델명" className="flex-1 sm:w-40 px-3 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm outline-none focus:border-[#E2000F]"
-                  value={newDeviceName} onChange={e => setNewDeviceName(e.target.value)}
-                />
-                <input 
-                  type="number" placeholder="출고가" className="w-28 px-3 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm outline-none focus:border-[#E2000F]"
-                  value={newDevicePrice} onChange={e => setNewDevicePrice(e.target.value === '' ? '' : Number(e.target.value))}
-                />
+              <h2 className="text-xl font-black text-slate-900 flex items-center gap-2"><i className="fas fa-mobile-screen text-[#E2000F]"></i> 단말기 관리</h2>
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto items-center">
+                <select className="px-3 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm focus:border-[#E2000F] outline-none" value={newDeviceCategory} onChange={e => setNewDeviceCategory(e.target.value as DeviceCategory)}>
+                  {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <input type="number" placeholder="순번" className="w-16 px-3 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm focus:border-[#E2000F] outline-none" value={newDeviceOrder} onChange={e => setNewDeviceOrder(e.target.value === '' ? '' : Number(e.target.value))} />
+                <input type="text" placeholder="모델명" className="flex-1 sm:w-40 px-3 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm focus:border-[#E2000F] outline-none" value={newDeviceName} onChange={e => setNewDeviceName(e.target.value)} />
+                <input type="number" placeholder="출고가" className="w-28 px-3 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm focus:border-[#E2000F] outline-none" value={newDevicePrice} onChange={e => setNewDevicePrice(e.target.value === '' ? '' : Number(e.target.value))} />
                 <button onClick={addDevice} className="bg-[#E2000F] text-white px-5 py-2.5 rounded-xl text-sm font-black shadow-md hover:bg-red-700 transition">추가</button>
               </div>
             </div>
             <div className="overflow-x-auto max-h-[400px]">
               <table className="w-full text-base">
                 <thead className="sticky top-0 bg-slate-50 z-10 shadow-sm">
-                  <tr className="border-b-2 border-slate-100">
-                    <th className="px-6 py-4 text-left font-black text-slate-500 w-20 text-center">순번</th>
-                    <th className="px-6 py-4 text-left font-black text-slate-500">모델명</th>
-                    <th className="px-6 py-4 text-left font-black text-slate-500">출고가 (수정 가능)</th>
-                    <th className="px-6 py-4 text-center font-black text-slate-500">동작</th>
-                  </tr>
+                  <tr className="border-b-2 border-slate-100"><th className="px-6 py-4 text-left font-black text-slate-500 w-20 text-center">순번</th><th className="px-6 py-4 text-left font-black text-slate-500">분류</th><th className="px-6 py-4 text-left font-black text-slate-500">모델명</th><th className="px-6 py-4 text-left font-black text-slate-500">출고가</th><th className="px-6 py-4 text-center font-black text-slate-500">동작</th></tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {sortedDevices.map(d => (
-                    <tr key={d.id} className="hover:bg-slate-50 transition">
-                      <td className="px-6 py-4 text-center">
-                        <input 
-                          type="number"
-                          className="w-14 px-2 py-1 border-2 border-slate-200 rounded-lg text-sm font-black text-center focus:border-[#E2000F]"
-                          value={d.order || ''}
-                          onChange={(e) => updateDeviceOrder(d.id, Number(e.target.value))}
-                        />
-                      </td>
-                      <td className="px-6 py-4 font-black text-slate-800">{d.name}</td>
-                      <td className="px-6 py-4">
-                        <input 
-                          type="number"
-                          className="w-32 px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm font-black focus:border-[#E2000F]"
-                          value={d.price}
-                          onChange={(e) => updateDevicePrice(d.id, Number(e.target.value))}
-                        />
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <button onClick={() => setDevices(devices.filter(x => x.id !== d.id))} className="text-red-400 hover:text-red-600 transition"><i className="fas fa-trash-alt"></i></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+                <tbody className="divide-y divide-slate-100">{sortedDevices.map(d => (
+                  <tr key={d.id} className="hover:bg-slate-50 transition">
+                    <td className="px-6 py-4 text-center"><input type="number" className="w-14 px-2 py-1 border-2 border-slate-200 rounded-lg text-sm font-black text-center focus:border-[#E2000F]" value={d.order || ''} onChange={(e) => updateDeviceOrder(d.id, Number(e.target.value))} /></td>
+                    <td className="px-6 py-4">
+                      <select className="px-2 py-1 border-2 border-slate-200 rounded-lg text-xs font-black focus:border-[#E2000F]" value={d.category} onChange={e => updateDeviceCategory(d.id, e.target.value as DeviceCategory)}>
+                        {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 font-black text-slate-800">{d.name}</td>
+                    <td className="px-6 py-4"><input type="number" className="w-32 px-3 py-1.5 border-2 border-slate-200 rounded-lg text-sm font-black focus:border-[#E2000F]" value={d.price} onChange={(e) => updateDevicePrice(d.id, Number(e.target.value))} /></td>
+                    <td className="px-6 py-4 text-center"><button onClick={() => setDevices(devices.filter(x => x.id !== d.id))} className="text-red-400 hover:text-red-600 transition"><i className="fas fa-trash-alt"></i></button></td>
+                  </tr>
+                ))}</tbody>
               </table>
             </div>
           </div>
 
-          {/* Subsidies Management Section (Flipped: Devices Rows, Plans Columns Sorted by Price Desc) */}
           <div className="bg-white rounded-3xl shadow-xl border-2 border-slate-200 overflow-hidden">
             <div className="bg-slate-100 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-2 border-slate-200">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-black text-slate-900 flex items-center gap-2"><i className="fas fa-hand-holding-dollar"></i> 지원금 및 요금제 관리</h2>
-                <span className="text-[10px] bg-[#F37321] text-white px-2 py-1 rounded-md font-black">HIGH-PRICE FIRST</span>
-              </div>
+              <h2 className="text-xl font-black text-slate-900 flex items-center gap-2"><i className="fas fa-hand-holding-dollar text-[#F37321]"></i> 요금제/지원금 관리</h2>
               <div className="flex gap-2 w-full sm:w-auto">
-                <input 
-                  type="text" placeholder="요금제명" className="flex-1 sm:w-40 px-3 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm outline-none focus:border-[#F37321]"
-                  value={newPlanName} onChange={e => setNewPlanName(e.target.value)}
-                />
-                <input 
-                  type="number" placeholder="월정액" className="w-28 px-3 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm outline-none focus:border-[#F37321]"
-                  value={newPlanPrice} onChange={e => setNewPlanPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                />
-                <button onClick={addPlan} className="bg-[#F37321] text-white px-5 py-2.5 rounded-xl text-sm font-black shadow-md hover:bg-[#d65f1a] transition">요금제 추가</button>
+                <input type="text" placeholder="요금제명" className="flex-1 sm:w-40 px-3 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm focus:border-[#F37321] outline-none" value={newPlanName} onChange={e => setNewPlanName(e.target.value)} />
+                <input type="number" placeholder="월정액" className="w-28 px-3 py-2 rounded-xl border-2 border-slate-300 font-bold text-sm focus:border-[#F37321] outline-none" value={newPlanPrice} onChange={e => setNewPlanPrice(e.target.value === '' ? '' : Number(e.target.value))} />
+                <button onClick={addPlan} className="bg-[#F37321] text-white px-5 py-2.5 rounded-xl text-sm font-black shadow-md hover:bg-[#d65f1a] transition">추가</button>
               </div>
             </div>
             <div className="overflow-x-auto max-h-[600px]">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-slate-50 z-10 shadow-sm">
                   <tr className="border-b-2 border-slate-100">
-                    <th className="px-6 py-4 text-left font-black text-slate-500 min-w-[200px] border-r">단말기 (아래로 나열)</th>
+                    <th className="px-6 py-4 text-left font-black text-slate-500 min-w-[200px] border-r">단말기</th>
                     {sortedPlans.map(p => (
                       <th key={p.id} className="px-4 py-4 text-center font-black text-slate-700 min-w-[140px]">
                         <div className="flex flex-col items-center">
                           <span className="text-[11px] leading-tight mb-2 h-8 flex items-center">{p.name}</span>
-                          <input 
-                            type="number"
-                            className="w-full px-2 py-1 border-2 border-slate-200 rounded-lg text-xs font-black text-center focus:border-[#F37321] mb-2"
-                            value={p.price}
-                            onChange={(e) => updatePlanPrice(p.id, Number(e.target.value))}
-                          />
-                          <button onClick={() => setPlans(plans.filter(x => x.id !== p.id))} className="text-slate-300 hover:text-red-500 transition-colors">
-                            <i className="fas fa-times-circle"></i>
-                          </button>
+                          <input type="number" className="w-full px-2 py-1 border-2 border-slate-200 rounded-lg text-xs font-black text-center mb-2" value={p.price} onChange={(e) => updatePlanPrice(p.id, Number(e.target.value))} />
+                          <button onClick={() => setPlans(plans.filter(x => x.id !== p.id))} className="text-slate-300 hover:text-red-500 transition-colors"><i className="fas fa-times-circle"></i></button>
                         </div>
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {sortedDevices.map(d => (
-                    <tr key={d.id} className="hover:bg-slate-50 transition">
-                      <td className="px-6 py-4 font-black text-slate-800 border-r bg-slate-50/50">
-                        <div className="flex flex-col">
-                          <span className="text-xs uppercase text-slate-400 font-black mb-1">ORDER {d.order || '999'}</span>
-                          <span className="leading-tight">{d.name}</span>
-                        </div>
+                <tbody className="divide-y divide-slate-100">{sortedDevices.map(d => (
+                  <tr key={d.id} className="hover:bg-slate-50 transition">
+                    <td className="px-6 py-4 font-black text-slate-800 border-r bg-slate-50/50">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase text-slate-400 font-black">{d.category}</span>
+                        <span className="leading-tight">{d.name}</span>
+                      </div>
+                    </td>
+                    {sortedPlans.map(p => (
+                      <td key={p.id} className="px-4 py-4 text-center">
+                        <input type="number" className="w-full px-2 py-1.5 border-2 border-slate-200 rounded-lg text-xs font-black text-[#E2000F] text-center" value={p.subsidy[d.id] || 0} onChange={(e) => updateSubsidy(p.id, d.id, Number(e.target.value))} />
                       </td>
-                      {sortedPlans.map(p => (
-                        <td key={p.id} className="px-4 py-4 text-center">
-                          <input 
-                            type="number" 
-                            className="w-full px-2 py-1.5 border-2 border-slate-200 rounded-lg text-xs font-black text-[#E2000F] text-center focus:border-[#E2000F]"
-                            value={p.subsidy[d.id] || 0}
-                            placeholder="0"
-                            onChange={(e) => updateSubsidy(p.id, d.id, Number(e.target.value))}
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
+                    ))}
+                  </tr>
+                ))}</tbody>
               </table>
             </div>
           </div>
 
-          <div className="text-center pt-4">
-            <button onClick={resetData} className="px-8 py-4 bg-slate-200 hover:bg-red-100 hover:text-red-700 text-slate-600 rounded-2xl font-black transition-all">
-              <i className="fas fa-undo mr-2"></i> 데이터 초기화
-            </button>
-          </div>
+          <div className="text-center pt-4"><button onClick={resetData} className="px-8 py-4 bg-slate-200 hover:bg-red-100 hover:text-red-700 text-slate-600 rounded-2xl font-black transition-all"><i className="fas fa-undo mr-2"></i> 데이터 초기화</button></div>
+
+          {showExportModal && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
+              <div className="bg-slate-900 text-white rounded-[2rem] w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in duration-300">
+                <div className="p-8 border-b border-white/10 flex justify-between items-center">
+                  <div><h3 className="text-2xl font-black">시스템 설정 코드 추출</h3><p className="text-slate-400 text-sm">App.tsx 상단의 상수를 아래 내용으로 교체하세요.</p></div>
+                  <button onClick={() => setShowExportModal(false)} className="text-slate-400 hover:text-white transition-colors text-3xl">&times;</button>
+                </div>
+                <div className="p-8 flex-1 overflow-auto">
+                  <pre className="bg-black/50 p-6 rounded-2xl text-green-400 text-sm font-mono overflow-x-auto leading-relaxed border border-white/5 select-all whitespace-pre">{getExportCode()}</pre>
+                </div>
+                <div className="p-8 border-t border-white/10 flex gap-4">
+                  <button onClick={copyToClipboard} className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl font-black transition-all shadow-lg"><i className="fas fa-copy mr-2"></i> 전체 복사</button>
+                  <button onClick={() => setShowExportModal(false)} className="px-8 py-4 bg-slate-800 hover:bg-slate-700 rounded-2xl font-black transition-all">닫기</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <main className="max-w-6xl mx-auto p-6 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start flex-1">
           <div className="lg:col-span-5 space-y-8">
             <section className="bg-white p-8 rounded-[2.5rem] shadow-xl border-2 border-slate-100 space-y-6">
-              <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-4">
-                <i className="fas fa-check-circle text-[#E2000F] text-xl"></i>
-                <h3 className="text-lg font-black text-slate-900 uppercase">기본 조건 설정</h3>
+              <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-4"><i className="fas fa-check-circle text-[#E2000F] text-xl"></i><h3 className="text-lg font-black text-slate-900 uppercase">기본 조건 설정</h3></div>
+              
+              <div className="space-y-4">
+                <label className="block text-sm font-black text-slate-500 uppercase tracking-tighter">라인업 선택</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {CATEGORIES.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => handleCategoryChange(cat.id as DeviceCategory)}
+                      className={`py-3 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border-2 ${userCategory === cat.id ? 'bg-[#E2000F] border-[#E2000F] text-white shadow-lg shadow-red-200' : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-slate-200'}`}
+                    >
+                      <i className={`fas ${cat.icon} text-lg`}></i>
+                      <span className="text-[11px] font-black">{cat.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-black text-slate-500 mb-2 uppercase tracking-tighter">단말기 모델</label>
                 <select 
-                  className="w-full px-6 py-4 rounded-2xl border-4 border-slate-100 bg-slate-50 font-black text-xl text-slate-900 focus:border-[#E2000F] outline-none transition-all appearance-none cursor-pointer"
-                  value={state.deviceId}
+                  className="w-full px-6 py-4 rounded-2xl border-4 border-slate-100 bg-slate-50 font-black text-xl text-slate-900 focus:border-[#E2000F] outline-none transition-all appearance-none cursor-pointer" 
+                  value={state.deviceId} 
                   onChange={(e) => setState({...state, deviceId: e.target.value})}
                 >
-                  {sortedDevices.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  {filteredDevicesForUser.length > 0 ? (
+                    filteredDevicesForUser.map(d => <option key={d.id} value={d.id}>{d.name}</option>)
+                  ) : (
+                    <option disabled>등록된 모델 없음</option>
+                  )}
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-black text-slate-400 mb-2 uppercase tracking-tighter">납부 방식</label>
-                  <div className="flex bg-slate-100 p-2 rounded-2xl">
-                    <button 
-                      onClick={() => setState({...state, paymentMethod: PaymentMethod.INSTALLMENT})}
-                      className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${state.paymentMethod === PaymentMethod.INSTALLMENT ? 'bg-white shadow-md text-[#E2000F]' : 'text-slate-500'}`}
-                    >할부</button>
-                    <button 
-                      onClick={() => setState({...state, paymentMethod: PaymentMethod.LUMP_SUM})}
-                      className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${state.paymentMethod === PaymentMethod.LUMP_SUM ? 'bg-white shadow-md text-[#E2000F]' : 'text-slate-500'}`}
-                    >일시불</button>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-black text-slate-400 mb-2 uppercase tracking-tighter">할인 구분</label>
-                  <div className="flex bg-slate-100 p-2 rounded-2xl">
-                    <button 
-                      onClick={() => setState({...state, discountType: DiscountType.SUBSIDY})}
-                      className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${state.discountType === DiscountType.SUBSIDY ? 'bg-white shadow-md text-[#F37321]' : 'text-slate-500'}`}
-                    >공시</button>
-                    <button 
-                      onClick={() => setState({...state, discountType: DiscountType.CONTRACT})}
-                      className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${state.discountType === DiscountType.CONTRACT ? 'bg-white shadow-md text-[#F37321]' : 'text-slate-500'}`}
-                    >선약</button>
-                  </div>
-                </div>
+                <div><label className="block text-xs font-black text-slate-400 mb-2 uppercase tracking-tighter">납부 방식</label><div className="flex bg-slate-100 p-2 rounded-2xl"><button onClick={() => setState({...state, paymentMethod: PaymentMethod.INSTALLMENT})} className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${state.paymentMethod === PaymentMethod.INSTALLMENT ? 'bg-white shadow-md text-[#E2000F]' : 'text-slate-500'}`}>할부</button><button onClick={() => setState({...state, paymentMethod: PaymentMethod.LUMP_SUM})} className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${state.paymentMethod === PaymentMethod.LUMP_SUM ? 'bg-white shadow-md text-[#E2000F]' : 'text-slate-500'}`}>일시불</button></div></div>
+                <div><label className="block text-xs font-black text-slate-400 mb-2 uppercase tracking-tighter">할인 구분</label><div className="flex bg-slate-100 p-2 rounded-2xl"><button onClick={() => setState({...state, discountType: DiscountType.SUBSIDY})} className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${state.discountType === DiscountType.SUBSIDY ? 'bg-white shadow-md text-[#F37321]' : 'text-slate-500'}`}>공시</button><button onClick={() => setState({...state, discountType: DiscountType.CONTRACT})} className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${state.discountType === DiscountType.CONTRACT ? 'bg-white shadow-md text-[#F37321]' : 'text-slate-500'}`}>선약</button></div></div>
               </div>
-
+              
               <div>
-                <label className="block text-sm font-black text-slate-500 mb-2 uppercase tracking-tighter">임직원 할인 (원)</label>
+                <label className="block text-sm font-black text-slate-500 mb-2 tracking-tighter">임직원 할인금액을 (원)단위로 입력하세요</label>
                 <input 
-                  type="number"
-                  className="w-full px-6 py-4 rounded-2xl border-4 border-slate-100 bg-slate-50 font-black text-xl text-slate-900 outline-none focus:border-[#E2000F] transition-all"
-                  value={state.employeeDiscount}
-                  onChange={(e) => setState({...state, employeeDiscount: Number(e.target.value)})}
-                  placeholder="0"
+                  type="number" 
+                  className="w-full px-6 py-4 rounded-2xl border-4 border-slate-100 bg-slate-50 font-black text-xl text-slate-900 outline-none focus:border-[#E2000F] transition-all" 
+                  value={state.employeeDiscount === 0 ? '' : state.employeeDiscount} 
+                  onChange={(e) => setState({...state, employeeDiscount: e.target.value === '' ? 0 : Number(e.target.value)})} 
+                  placeholder="0" 
                 />
               </div>
             </section>
 
             <section className="bg-white p-8 rounded-[2.5rem] shadow-xl border-2 border-slate-100 space-y-6">
-              <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-4">
-                <i className="fas fa-layer-group text-[#F37321] text-xl"></i>
-                <h3 className="text-lg font-black text-slate-900 uppercase">요금제 설계</h3>
-              </div>
-
+              <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-4"><i className="fas fa-layer-group text-[#F37321] text-xl"></i><h3 className="text-lg font-black text-slate-900 uppercase">요금제 설계</h3></div>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-black text-slate-400 mb-1 tracking-tighter">유지 요금제 (M+{state.maintenanceMonths})</label>
-                  <select 
-                    className="w-full px-5 py-4 rounded-2xl border-4 border-slate-50 bg-slate-50 font-black text-lg text-slate-900 outline-none"
-                    value={state.initialPlanId}
-                    onChange={(e) => setState({...state, initialPlanId: e.target.value})}
-                  >
-                    {sortedPlans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-black text-slate-400 mb-1 tracking-tighter">변경 후 요금제</label>
-                  <select 
-                    className="w-full px-5 py-4 rounded-2xl border-4 border-slate-50 bg-slate-50 font-black text-lg text-slate-900 outline-none"
-                    value={state.afterPlanId}
-                    onChange={(e) => setState({...state, afterPlanId: e.target.value})}
-                  >
-                    {sortedPlans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
+                <div><label className="block text-xs font-black text-slate-400 mb-1 tracking-tighter">유지 요금제 (M+{state.maintenanceMonths})</label><select className="w-full px-5 py-4 rounded-2xl border-4 border-slate-100 bg-slate-50 font-black text-lg text-slate-900 outline-none" value={state.initialPlanId} onChange={(e) => setState({...state, initialPlanId: e.target.value})}>{sortedPlans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+                <div><label className="block text-xs font-black text-slate-400 mb-1 tracking-tighter">변경 후 요금제</label><select className="w-full px-5 py-4 rounded-2xl border-4 border-slate-100 bg-slate-50 font-black text-lg text-slate-900 outline-none" value={state.afterPlanId} onChange={(e) => setState({...state, afterPlanId: e.target.value})}>{sortedPlans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
               </div>
-
-              <div className="bg-slate-50 p-6 rounded-3xl flex items-center justify-between border-2 border-slate-100 cursor-pointer" onClick={() => setState({...state, useFamilyDiscount: !state.useFamilyDiscount})}>
-                <div>
-                  <h4 className="text-base font-black text-slate-800 transition">SKT 온가족할인 적용</h4>
-                  <p className="text-[10px] text-slate-400 font-bold">기본료 30% 추가 할인</p>
-                </div>
-                <div className={`w-16 h-8 rounded-full relative transition-all duration-300 shadow-inner ${state.useFamilyDiscount ? 'bg-[#E2000F]' : 'bg-slate-300'}`}>
-                  <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 ${state.useFamilyDiscount ? 'translate-x-9' : 'translate-x-1'}`}></div>
-                </div>
-              </div>
+              <div className="bg-slate-50 p-6 rounded-3xl flex items-center justify-between border-2 border-slate-100 cursor-pointer shadow-sm" onClick={() => setState({...state, useFamilyDiscount: !state.useFamilyDiscount})}><div><h4 className="text-base font-black text-slate-800 transition">SKT 온가족할인 적용</h4><p className="text-[10px] text-slate-400 font-bold">기본료 30% 추가 할인</p></div><div className={`w-16 h-8 rounded-full relative transition-all duration-300 shadow-inner ${state.useFamilyDiscount ? 'bg-[#E2000F]' : 'bg-slate-300'}`}><div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 ${state.useFamilyDiscount ? 'translate-x-9' : 'translate-x-1'}`}></div></div></div>
             </section>
           </div>
 
           <div className="lg:col-span-7 space-y-8">
             <section className="bg-gradient-to-br from-[#E2000F] via-[#F37321] to-[#E2000F] rounded-[3rem] p-10 shadow-2xl border-4 border-white/20 relative overflow-hidden text-center text-white">
-              <div className="absolute top-0 right-0 p-16 opacity-10 rotate-12">
-                <i className="fas fa-coins text-[8rem]"></i>
-              </div>
-              <div className="absolute bottom-0 left-0 p-16 opacity-10 -rotate-12">
-                <i className="fas fa-file-invoice-dollar text-[8rem]"></i>
-              </div>
-
+              <div className="absolute top-0 right-0 p-16 opacity-10 rotate-12"><i className="fas fa-coins text-[8rem]"></i></div>
+              <div className="absolute bottom-0 left-0 p-16 opacity-10 -rotate-12"><i className="fas fa-file-invoice-dollar text-[8rem]"></i></div>
               <div className="relative z-10 space-y-8">
-                <div>
-                  <span className="bg-white/20 backdrop-blur-md text-white text-sm font-black px-6 py-2.5 rounded-full uppercase tracking-widest border border-white/30 shadow-lg inline-block">
-                    최종 할부원금 (기기 순수 가격)
-                  </span>
-                  <div className="text-4xl lg:text-5xl font-black mt-6 tracking-tighter drop-shadow-2xl">
-                    {formatKrw(results.principal)}
-                  </div>
-                  <p className="text-xs text-white/70 mt-4 font-bold bg-black/10 px-6 py-2 rounded-full inline-block">
-                    출고가 {formatKrw(selectedDevice.price)} 
-                    {results.subsidy > 0 && ` - 지원금 ${formatKrw(results.subsidy)}`}
-                    {state.employeeDiscount > 0 && ` - 임직원할인 ${formatKrw(state.employeeDiscount)}`}
-                  </p>
-                </div>
-
-                <div className="flex flex-col items-center justify-center pt-8 border-t-2 border-white/20">
-                  <span className="text-white/80 text-sm font-black uppercase tracking-widest mb-1">24개월 총 소요 비용 (기기+통신료)</span>
-                  <div className="text-3xl lg:text-4xl font-black drop-shadow-sm">{formatKrw(results.total2Year)}</div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-6 pt-2">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 border border-white/20 shadow-inner">
-                    <span className="text-white/70 text-xs font-black block mb-2 uppercase tracking-tighter">월 단말기 납부액</span>
-                    <span className="text-xl lg:text-2xl font-black">{formatKrw(results.monthlyInstallment)}</span>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 border border-white/20 shadow-inner">
-                    <span className="text-white/70 text-xs font-black block mb-2 uppercase tracking-tighter">2년간 총 이자(5.9%)</span>
-                    <span className="text-xl lg:text-2xl font-black">{formatKrw(results.totalInterest)}</span>
-                  </div>
-                </div>
+                <div><span className="bg-white/20 backdrop-blur-md text-white text-sm font-black px-6 py-2.5 rounded-full uppercase tracking-widest border border-white/30 shadow-lg inline-block">최종 할부원금</span><div className="text-4xl lg:text-5xl font-black mt-6 tracking-tighter drop-shadow-2xl">{formatKrw(results.principal)}</div><p className="text-xs text-white/70 mt-4 font-bold bg-black/10 px-6 py-2 rounded-full inline-block">출고가 {formatKrw(selectedDevice.price)} {results.subsidy > 0 && ` - 지원금 ${formatKrw(results.subsidy)}`} {state.employeeDiscount > 0 && ` - 임직원할인 ${formatKrw(state.employeeDiscount)}`}</p></div>
+                <div className="flex flex-col items-center justify-center pt-8 border-t-2 border-white/20"><span className="text-white/80 text-sm font-black uppercase tracking-widest mb-1">24개월 총 소요 비용</span><div className="text-3xl lg:text-4xl font-black drop-shadow-sm">{formatKrw(results.total2Year)}</div></div>
+                <div className="grid grid-cols-2 gap-6 pt-2"><div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 border border-white/20 shadow-inner"><span className="text-white/70 text-xs font-black block mb-2 uppercase tracking-tighter">월 단말기 납부액</span><span className="text-xl lg:text-2xl font-black">{formatKrw(results.monthlyInstallment)}</span></div><div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 border border-white/20 shadow-inner"><span className="text-white/70 text-xs font-black block mb-2 uppercase tracking-tighter">2년간 총 이자(5.9%)</span><span className="text-xl lg:text-2xl font-black">{formatKrw(results.totalInterest)}</span></div></div>
               </div>
             </section>
-
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border-2 border-slate-100 flex flex-col h-full relative">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 text-xl shadow-inner"><i className="fas fa-hourglass-start"></i></div>
-                  <div>
-                    <h4 className="text-lg font-black text-slate-900">변경 전 {state.maintenanceMonths}개월</h4>
-                    <p className="text-[11px] text-slate-400 font-black uppercase tracking-widest">Initial Fee</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-4 flex-1">
-                  <div className="flex justify-between text-sm font-black">
-                    <span className="text-slate-500 tracking-tighter">기본료 ({initialPlan.name})</span>
-                    <span className="text-slate-900">{formatKrw(initialPlan.price)}</span>
-                  </div>
-                  {results.initial.contractDiscount > 0 && (
-                    <div className="flex justify-between text-sm font-black text-[#E2000F]">
-                      <span className="tracking-tighter">선택약정(25%)</span>
-                      <span>-{formatKrw(results.initial.contractDiscount)}</span>
-                    </div>
-                  )}
-                  {results.initial.familyDiscount > 0 && (
-                    <div className="flex justify-between text-sm font-black text-[#F37321]">
-                      <span className="tracking-tighter">온가족할인(30%)</span>
-                      <span>-{formatKrw(results.initial.familyDiscount)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm font-black pt-2 border-t border-slate-50">
-                    <span className="text-slate-500 tracking-tighter">단말기 할부금</span>
-                    <span className="text-slate-900">{formatKrw(results.monthlyInstallment)}</span>
-                  </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t-4 border-slate-100 flex justify-between items-end gap-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">월 예상 납부액</span>
-                  <span className="text-xl lg:text-2xl font-black text-slate-900 leading-none whitespace-nowrap">{formatKrw(results.initial.total)}</span>
-                </div>
+                <div className="flex items-center gap-3 mb-8"><div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 text-xl shadow-inner"><i className="fas fa-hourglass-start"></i></div><div><h4 className="text-lg font-black text-slate-900">변경 전 {state.maintenanceMonths}개월</h4><p className="text-[11px] text-slate-400 font-black uppercase tracking-widest">Initial Fee</p></div></div>
+                <div className="space-y-4 flex-1"><div className="flex justify-between text-sm font-black"><span className="text-slate-500 tracking-tighter">기본료 ({initialPlan.name})</span><span className="text-slate-900">{formatKrw(initialPlan.price)}</span></div>{results.initial.contractDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#E2000F]"><span className="tracking-tighter">선택약정(25%)</span><span>-{formatKrw(results.initial.contractDiscount)}</span></div>)}{results.initial.familyDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#F37321]"><span className="tracking-tighter">온가족할인(30%)</span><span>-{formatKrw(results.initial.familyDiscount)}</span></div>)}<div className="flex justify-between text-sm font-black pt-2 border-t border-slate-50"><span className="text-slate-500 tracking-tighter">단말기 할부금</span><span className="text-slate-900">{formatKrw(results.monthlyInstallment)}</span></div></div>
+                <div className="mt-8 pt-6 border-t-4 border-slate-100 flex justify-between items-end gap-2"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">월 예상 납부액</span><span className="text-xl lg:text-2xl font-black text-slate-900 leading-none whitespace-nowrap">{formatKrw(results.initial.total)}</span></div>
               </div>
-
               <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border-4 border-[#E2000F]/20 flex flex-col h-full relative">
                 <div className="absolute top-0 right-0 bg-[#E2000F] text-white text-[10px] font-black px-5 py-2 rounded-bl-2xl shadow-md">OPTIMAL DESIGN</div>
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-[#E2000F] text-xl shadow-inner"><i className="fas fa-check-double"></i></div>
-                  <div>
-                    <h4 className="text-lg font-black text-slate-900">변경 후 {24 - state.maintenanceMonths}개월</h4>
-                    <p className="text-[11px] text-slate-400 font-black uppercase tracking-widest">Post-Period Fee</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4 flex-1">
-                  <div className="flex justify-between text-sm font-black">
-                    <span className="text-slate-500 tracking-tighter">기본료 ({afterPlan.name})</span>
-                    <span className="text-slate-900">{formatKrw(afterPlan.price)}</span>
-                  </div>
-                  {results.after.contractDiscount > 0 && (
-                    <div className="flex justify-between text-sm font-black text-[#E2000F]">
-                      <span className="tracking-tighter">선택약정(25%)</span>
-                      <span>-{formatKrw(results.after.contractDiscount)}</span>
-                    </div>
-                  )}
-                  {results.after.familyDiscount > 0 && (
-                    <div className="flex justify-between text-sm font-black text-[#F37321]">
-                      <span className="tracking-tighter">온가족할인(30%)</span>
-                      <span>-{formatKrw(results.after.familyDiscount)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm font-black pt-2 border-t border-slate-50">
-                    <span className="text-slate-500 tracking-tighter">단말기 할부금</span>
-                    <span className="text-slate-900">{formatKrw(results.monthlyInstallment)}</span>
-                  </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t-4 border-[#E2000F]/10 flex justify-between items-end gap-2">
-                  <span className="text-[10px] font-black text-[#E2000F] uppercase tracking-widest leading-none mb-1">월 예상 납부액</span>
-                  <span className="text-xl lg:text-2xl font-black text-[#E2000F] leading-none whitespace-nowrap">{formatKrw(results.after.total)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-lg border-2 border-slate-100 space-y-4">
-              <h5 className="text-base font-black text-slate-900 flex items-center gap-2 uppercase tracking-tighter">
-                <i className="fas fa-info-circle text-[#E2000F]"></i> 상세 산출 근거 및 안내
-              </h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
-                <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-100">
-                  <p className="text-sm font-black text-slate-800 mb-3 tracking-tighter">비용 합계 상세</p>
-                  <div className="space-y-2 text-xs font-bold text-slate-500">
-                    <div className="flex justify-between"><span className="tracking-tighter">할부원금</span><span>{formatKrw(results.principal)}</span></div>
-                    <div className="flex justify-between"><span className="tracking-tighter">유지기간 총액 ({state.maintenanceMonths}개월)</span><span>{formatKrw(results.initial.total * state.maintenanceMonths)}</span></div>
-                    <div className="flex justify-between"><span className="tracking-tighter">이후기간 총액 ({24-state.maintenanceMonths}개월)</span><span>{formatKrw(results.after.total * (24-state.maintenanceMonths))}</span></div>
-                    <div className="pt-2 border-t-2 border-slate-200 flex justify-between text-slate-900 font-black"><span>24개월 총액</span><span>{formatKrw(results.total2Year)}</span></div>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <ul className="text-xs font-black text-slate-500 space-y-2 list-none">
-                    <li className="flex gap-2"><i className="fas fa-caret-right text-[#E2000F] mt-1"></i> 할부 이자: 연 5.9% 원리금균등 기준 (월 복리)</li>
-                    <li className="flex gap-2"><i className="fas fa-caret-right text-[#E2000F] mt-1"></i> 온가족할인: 가입 연수 합산 30년 이상 기준</li>
-                    <li className="flex gap-2"><i className="fas fa-caret-right text-[#E2000F] mt-1"></i> 공시지원금: 초기 선택 요금제에 따라 상이함</li>
-                    <li className="flex gap-2"><i className="fas fa-caret-right text-[#E2000F] mt-1"></i> 유효기간: 개통 당일 정책에 따라 변동 가능</li>
-                  </ul>
-                </div>
+                <div className="flex items-center gap-3 mb-8"><div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-[#E2000F] text-xl shadow-inner"><i className="fas fa-check-double"></i></div><div><h4 className="text-lg font-black text-slate-900">변경 후 {24 - state.maintenanceMonths}개월</h4><p className="text-[11px] text-slate-400 font-black uppercase tracking-widest">Post-Period Fee</p></div></div>
+                <div className="space-y-4 flex-1"><div className="flex justify-between text-sm font-black"><span className="text-slate-500 tracking-tighter">기본료 ({afterPlan.name})</span><span className="text-slate-900">{formatKrw(afterPlan.price)}</span></div>{results.after.contractDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#E2000F]"><span className="tracking-tighter">선택약정(25%)</span><span>-{formatKrw(results.after.contractDiscount)}</span></div>)}{results.after.familyDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#F37321]"><span className="tracking-tighter">온가족할인(30%)</span><span>-{formatKrw(results.after.familyDiscount)}</span></div>)}<div className="flex justify-between text-sm font-black pt-2 border-t border-slate-50"><span className="text-slate-500 tracking-tighter">단말기 할부금</span><span className="text-slate-900">{formatKrw(results.monthlyInstallment)}</span></div></div>
+                <div className="mt-8 pt-6 border-t-4 border-[#E2000F]/10 flex justify-between items-end gap-2"><span className="text-[10px] font-black text-[#E2000F] uppercase tracking-widest leading-none mb-1">월 예상 납부액</span><span className="text-xl lg:text-2xl font-black text-[#E2000F] leading-none whitespace-nowrap">{formatKrw(results.after.total)}</span></div>
               </div>
             </div>
           </div>
@@ -620,15 +474,8 @@ const App: React.FC = () => {
 
       <footer className="max-w-6xl mx-auto px-6 mt-12 mb-12 text-center relative">
         <div className="w-20 h-2 bg-gradient-to-r from-[#E2000F] to-[#F37321] mx-auto rounded-full mb-6 shadow-sm opacity-50"></div>
-        <p className="text-slate-400 text-xs font-black uppercase tracking-[0.4em]">SK TELECOM SALES CONSULTING • PROFESSIONAL v3.6</p>
-        
-        <button 
-          onClick={() => isAdmin ? setIsAdmin(false) : setShowLogin(true)}
-          className="absolute right-6 bottom-0 text-slate-300 hover:text-slate-500 transition-colors"
-          title="관리자 설정"
-        >
-          <i className="fas fa-cog text-lg"></i>
-        </button>
+        <p className="text-slate-400 text-xs font-black uppercase tracking-[0.4em]">SK TELECOM SALES CONSULTING • PROFESSIONAL v4.1</p>
+        <button onClick={() => isAdmin ? setIsAdmin(false) : setShowLogin(true)} className="absolute right-6 bottom-0 text-slate-300 hover:text-slate-500 transition-colors" title="관리자 설정"><i className="fas fa-cog text-lg"></i></button>
       </footer>
     </div>
   );

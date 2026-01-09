@@ -16,11 +16,14 @@ export interface SktPlan {
   subsidy: Record<string, number>; // key: deviceId
 }
 
+export type DeviceCategory = 'foldable' | 's-series' | 'a-series' | 'apple';
+
 export interface SktDevice {
   id: string;
   name: string;
   price: number;
-  order?: number; // Added for manual sorting
+  category: DeviceCategory;
+  order?: number;
 }
 
 export interface CalculatorState {
