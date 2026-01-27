@@ -2,53 +2,53 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { DiscountType, PaymentMethod, SktPlan, SktDevice, CalculatorState, DeviceCategory } from './types';
 
+// [시스템 안내] 아래 DEFAULT 데이터는 관리자 모드에서 추출한 최신 데이터를 기반으로 동기화되었습니다.
 const STORAGE_KEY_DEVICES = 'skt_opt_devices_v4';
 const STORAGE_KEY_PLANS = 'skt_opt_plans_v4';
 
 const DEFAULT_DEVICES: SktDevice[] = [
-  { id: 's25-ultra', name: '갤럭시 S25 울트라 (512GB)', price: 1841400, category: 's-series', order: 16 },
-  { id: 's25-plus', name: '갤럭시 S25 플러스 (256GB)', price: 1353000, category: 's-series', order: 13 },
-  { id: 's25-base', name: '갤럭시 S25 (256GB)', price: 1155000, category: 's-series', order: 11 },
-  { id: 'dev-1767915282122', name: 'iPhone 17 ProMax (512GB)', price: 2288000, category: 'apple', order: 80 },
-  { id: 'dev-1767915303673', name: 'iPhone 17 ProMax (256GB)', price: 1980000, category: 'apple', order: 79 },
-  { id: 'dev-1767915327593', name: 'iPhone 17 Pro (512GB)', price: 2090000, category: 'apple', order: 76 },
-  { id: 'dev-1767915340737', name: 'iPhone 17 Pro (256GB)', price: 1782000, category: 'apple', order: 75 },
-  { id: 'dev-1767915359969', name: 'iPhone Air (512GB)', price: 1881000, category: 'apple', order: 74 },
-  { id: 'dev-1767915389512', name: 'iPhone Air (256GB)', price: 1584000, category: 'apple', order: 73 },
-  { id: 'dev-1767915429280', name: 'iPhone 17 (256GB)', price: 1287000, category: 'apple', order: 71 },
-  { id: 'dev-1767915442264', name: 'iPhone 17 (512GB)', price: 1584000, category: 'apple', order: 72 },
-  { id: 'dev-1767915493279', name: '갤럭시 Z 폴드7 (256GB)', price: 2379300, category: 'foldable', order: 2 },
   { id: 'dev-1767915504591', name: '갤럭시 Z 폴드7 (512GB)', price: 2537700, category: 'foldable', order: 1 },
+  { id: 'dev-1767915493279', name: '갤럭시 Z 폴드7 (256GB)', price: 2379300, category: 'foldable', order: 2 },
   { id: 'dev-1767915524863', name: '갤럭시 Z 플립7 (256GB)', price: 1485000, category: 'foldable', order: 3 },
   { id: 'dev-1767915570366', name: '갤럭시 Z 플립7 (512GB)', price: 1643400, category: 'foldable', order: 4 },
+  { id: 'dev-1767916109151', name: '갤럭시 S25 FE (256GB)', price: 946000, category: 's-series', order: 10 },
+  { id: 's25-base', name: '갤럭시 S25 (256GB)', price: 1155000, category: 's-series', order: 11 },
   { id: 'dev-1767915712564', name: '갤럭시 S25 (512GB)', price: 1298000, category: 's-series', order: 12 },
+  { id: 's25-plus', name: '갤럭시 S25 플러스 (256GB)', price: 1353000, category: 's-series', order: 13 },
   { id: 'dev-1767915766460', name: '갤럭시 S25 플러스 (512GB)', price: 1474000, category: 's-series', order: 14 },
   { id: 'dev-1767916003353', name: '갤럭시 S25 울트라 (256GB)', price: 1698400, category: 's-series', order: 15 },
-  { id: 'dev-1767916109151', name: '갤럭시 S25 FE (256GB)', price: 946000, category: 's-series', order: 10 },
+  { id: 's25-ultra', name: '갤럭시 S25 울트라 (512GB)', price: 1841400, category: 's-series', order: 16 },
+  { id: 'dev-1767917169762', name: '갤럭시 S25 엣지 (256GB)', price: 1496000, category: 's-series', order: 17 },
+  { id: 'dev-1767917190001', name: '갤럭시 S25 엣지 (512GB)', price: 1639000, category: 's-series', order: 18 },
   { id: 'dev-1767916167575', name: '갤럭시 퀀텀6', price: 618200, category: 'a-series', order: 21 },
   { id: 'dev-1767916206734', name: '갤럭시 와이드8 (128GB)', price: 374000, category: 'a-series', order: 23 },
   { id: 'dev-1767916247917', name: '갤럭시 A17 LTE (128GB)', price: 319000, category: 'a-series', order: 26 },
-  { id: 'dev-1767917169762', name: '갤럭시 S25 엣지 (256GB)', price: 1496000, category: 's-series', order: 17 },
-  { id: 'dev-1767917190001', name: '갤럭시 S25 엣지 (512GB)', price: 1639000, category: 's-series', order: 18 },
+  { id: 'dev-1767915429280', name: 'iPhone 17 (256GB)', price: 1287000, category: 'apple', order: 71 },
+  { id: 'dev-1767915442264', name: 'iPhone 17 (512GB)', price: 1584000, category: 'apple', order: 72 },
+  { id: 'dev-1767915389512', name: 'iPhone Air (256GB)', price: 1584000, category: 'apple', order: 73 },
+  { id: 'dev-1767915359969', name: 'iPhone Air (512GB)', price: 1881000, category: 'apple', order: 74 },
+  { id: 'dev-1767915340737', name: 'iPhone 17 Pro (256GB)', price: 1782000, category: 'apple', order: 75 },
+  { id: 'dev-1767915327593', name: 'iPhone 17 Pro (512GB)', price: 2090000, category: 'apple', order: 76 },
+  { id: 'dev-1767915303673', name: 'iPhone 17 ProMax (256GB)', price: 1980000, category: 'apple', order: 79 },
+  { id: 'dev-1767915282122', name: 'iPhone 17 ProMax (512GB)', price: 2288000, category: 'apple', order: 80 },
 ];
 
 const DEFAULT_PLANS: SktPlan[] = [
-  { id: '5gx-premium', name: '5GX 프리미엄', price: 109000, subsidy: { 's25-ultra': 500000, 's25-plus': 500000, 's25-base': 500000, 'z-fold6': 550000, 'z-flip6': 500000, 'iphone-16-pro': 200000, 'galaxy-a35': 350000, 'dev-1767915282122': 220000, 'dev-1767915303673': 220000, 'dev-1767915327593': 450000, 'dev-1767915340737': 450000, 'dev-1767915359969': 450000, 'dev-1767915389512': 450000, 'dev-1767915429280': 450000, 'dev-1767915442264': 450000, 'dev-1767915493279': 500000, 'dev-1767915504591': 500000, 'dev-1767915524863': 600000, 'dev-1767915570366': 600000, 'dev-1767915712564': 500000, 'dev-1767915766460': 500000, 'dev-1767916003353': 500000, 'dev-1767916109151': 530000, 'dev-1767916167575': 357000, 'dev-1767916206734': 293400, 'dev-1767916247917': 130000, 'dev-1767917169762': 600000, 'dev-1767917190001': 600000 } },
-  { id: '5gx-prime-plus', name: '5GX 프라임플러스', price: 99000, subsidy: { 's25-ultra': 490000, 's25-plus': 490000, 's25-base': 490000, 'z-fold6': 510000, 'z-flip6': 460000, 'iphone-16-pro': 180000, 'galaxy-a35': 320000, 'dev-1767915282122': 180000, 'dev-1767915303673': 180000, 'dev-1767915327593': 430000, 'dev-1767915340737': 430000, 'dev-1767915359969': 430000, 'dev-1767915389512': 430000, 'dev-1767915429280': 430000, 'dev-1767915442264': 430000, 'dev-1767915493279': 490000, 'dev-1767915504591': 490000, 'dev-1767915524863': 590000, 'dev-1767915570366': 590000, 'dev-1767915712564': 490000, 'dev-1767915766460': 490000, 'dev-1767916003353': 490000, 'dev-1767916109151': 500000, 'dev-1767916167575': 340000, 'dev-1767916206734': 293400, 'dev-1767916247917': 130000, 'dev-1767917169762': 590000, 'dev-1767917190001': 590000 } },
-  { id: '5gx-prime', name: '5GX 프라임', price: 89000, subsidy: { 's25-ultra': 480000, 's25-plus': 480000, 's25-base': 480000, 'z-fold6': 450000, 'z-flip6': 400000, 'iphone-16-pro': 150000, 'galaxy-a35': 280000, 'dev-1767915282122': 150000, 'dev-1767915303673': 150000, 'dev-1767915327593': 420000, 'dev-1767915340737': 420000, 'dev-1767915359969': 420000, 'dev-1767915389512': 420000, 'dev-1767915429280': 420000, 'dev-1767915442264': 420000, 'dev-1767915493279': 480000, 'dev-1767915504591': 480000, 'dev-1767915524863': 580000, 'dev-1767915570366': 580000, 'dev-1767915712564': 480000, 'dev-1767915766460': 480000, 'dev-1767916003353': 480000, 'dev-1767916109151': 480000, 'dev-1767916167575': 320000, 'dev-1767916206734': 293400, 'dev-1767916247917': 130000, 'dev-1767917169762': 580000, 'dev-1767917190001': 580000 } },
-  { id: '5gx-regular', name: '5GX 레귤러', price: 69000, subsidy: { 's25-ultra': 420000, 's25-plus': 420000, 's25-base': 420000, 'z-fold6': 320000, 'z-flip6': 280000, 'iphone-16-pro': 100000, 'galaxy-a35': 200000, 'dev-1767915282122': 118000, 'dev-1767915303673': 118000, 'dev-1767915327593': 360000, 'dev-1767915340737': 360000, 'dev-1767915359969': 360000, 'dev-1767915389512': 360000, 'dev-1767915429280': 360000, 'dev-1767915442264': 360000, 'dev-1767915493279': 420000, 'dev-1767915504591': 420000, 'dev-1767915524863': 520000, 'dev-1767915570366': 520000, 'dev-1767915712564': 420000, 'dev-1767915766460': 420000, 'dev-1767916003353': 420000, 'dev-1767916109151': 355000, 'dev-1767916167575': 248000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 520000, 'dev-1767917190001': 520000 } },
-  { id: '5gx-slim', name: '5GX 슬림', price: 55000, subsidy: { 's25-ultra': 370000, 's25-plus': 370000, 's25-base': 370000, 'z-fold6': 220000, 'z-flip6': 180000, 'iphone-16-pro': 80000, 'galaxy-a35': 150000, 'dev-1767915282122': 107000, 'dev-1767915303673': 107000, 'dev-1767915327593': 310000, 'dev-1767915340737': 310000, 'dev-1767915359969': 310000, 'dev-1767915389512': 310000, 'dev-1767915429280': 310000, 'dev-1767915442264': 310000, 'dev-1767915493279': 370000, 'dev-1767915504591': 370000, 'dev-1767915524863': 470000, 'dev-1767915570366': 470000, 'dev-1767915712564': 370000, 'dev-1767915766460': 370000, 'dev-1767916003353': 370000, 'dev-1767916109151': 316000, 'dev-1767916167575': 230000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 470000, 'dev-1767917190001': 470000 } },
-  { id: 'plan-1767916389004', name: '5GX 레귤러플러스', price: 79000, subsidy: { 's25-ultra': 453000, 's25-plus': 453000, 's25-base': 453000, 'iphone-16-pro': 374000, 'dev-1767915282122': 135000, 'dev-1767915303673': 135000, 'dev-1767915327593': 393000, 'dev-1767915340737': 393000, 'dev-1767915359969': 393000, 'dev-1767915389512': 393000, 'dev-1767915429280': 393000, 'dev-1767915442264': 393000, 'dev-1767915493279': 453000, 'dev-1767915504591': 453000, 'dev-1767915524863': 553000, 'dev-1767915570366': 553000, 'dev-1767915712564': 453000, 'dev-1767915766460': 453000, 'dev-1767916003353': 453000, 'dev-1767916109151': 425000, 'dev-1767916167575': 283000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 553000, 'dev-1767917190001': 553000 } },
-  { id: 'plan-1767916423859', name: '5GX 베이직플러스', price: 59000, subsidy: { 's25-ultra': 395000, 's25-plus': 395000, 's25-base': 395000, 'iphone-16-pro': 255000, 'dev-1767915282122': 112000, 'dev-1767915303673': 112000, 'dev-1767915327593': 335000, 'dev-1767915340737': 335000, 'dev-1767915359969': 335000, 'dev-1767915389512': 335000, 'dev-1767915429280': 335000, 'dev-1767915442264': 335000, 'dev-1767915493279': 395000, 'dev-1767915504591': 395000, 'dev-1767915524863': 495000, 'dev-1767915570366': 495000, 'dev-1767915712564': 395000, 'dev-1767915766460': 395000, 'dev-1767916003353': 395000, 'dev-1767916109151': 336000, 'dev-1767916167575': 239000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 495000, 'dev-1767917190001': 495000 } },
-  { id: 'plan-1767916466435', name: '5GX 베이직', price: 49000, subsidy: { 's25-ultra': 333000, 's25-plus': 333000, 's25-base': 333000, 'iphone-16-pro': 255000, 'dev-1767915282122': 100000, 'dev-1767915303673': 100000, 'dev-1767915327593': 273000, 'dev-1767915340737': 273000, 'dev-1767915359969': 273000, 'dev-1767915389512': 273000, 'dev-1767915429280': 273000, 'dev-1767915442264': 273000, 'dev-1767915493279': 333000, 'dev-1767915504591': 333000, 'dev-1767915524863': 433000, 'dev-1767915570366': 433000, 'dev-1767915712564': 333000, 'dev-1767915766460': 333000, 'dev-1767916003353': 333000, 'dev-1767916109151': 287000, 'dev-1767916167575': 215000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 433000, 'dev-1767917190001': 433000 } },
-  { id: 'plan-1767916494610', name: '5GX 컴팩트플러스', price: 45000, subsidy: { 's25-ultra': 315000, 's25-plus': 315000, 's25-base': 315000, 'iphone-16-pro': 255000, 'dev-1767915282122': 88000, 'dev-1767915303673': 88000, 'dev-1767915327593': 255000, 'dev-1767915340737': 255000, 'dev-1767915359969': 255000, 'dev-1767915389512': 255000, 'dev-1767915429280': 255000, 'dev-1767915442264': 255000, 'dev-1767915493279': 310000, 'dev-1767915504591': 310000, 'dev-1767915524863': 410000, 'dev-1767915570366': 410000, 'dev-1767915712564': 315000, 'dev-1767915766460': 315000, 'dev-1767916003353': 315000, 'dev-1767916109151': 265000, 'dev-1767916167575': 195000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 415000, 'dev-1767917190001': 415000 } },
-  { id: 'plan-1767916505570', name: '0틴5G', price: 45000, subsidy: { 's25-ultra': 315000, 's25-plus': 315000, 's25-base': 315000, 'iphone-16-pro': 255000, 'dev-1767915282122': 88000, 'dev-1767915303673': 88000, 'dev-1767915327593': 255000, 'dev-1767915340737': 255000, 'dev-1767915359969': 255000, 'dev-1767915389512': 255000, 'dev-1767915429280': 255000, 'dev-1767915442264': 255000, 'dev-1767915493279': 310000, 'dev-1767915504591': 310000, 'dev-1767915524863': 410000, 'dev-1767915570366': 410000, 'dev-1767915712564': 315000, 'dev-1767915766460': 315000, 'dev-1767916003353': 315000, 'dev-1767916109151': 265000, 'dev-1767916167575': 195000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 415000, 'dev-1767917190001': 415000 } },
-  { id: 'plan-1767916528994', name: '5GX 컴팩트', price: 39000, subsidy: { 's25-ultra': 0, 's25-plus': 0, 's25-base': 0, 'iphone-16-pro': 255000, 'dev-1767915282122': 0, 'dev-1767915303673': 0, 'dev-1767915327593': 0, 'dev-1767915340737': 0, 'dev-1767915359969': 0, 'dev-1767915389512': 0, 'dev-1767915429280': 0, 'dev-1767915442264': 0, 'dev-1767915493279': 0, 'dev-1767915504591': 0, 'dev-1767915524863': 0, 'dev-1767915570366': 0, 'dev-1767915712564': 0, 'dev-1767915766460': 0, 'dev-1767916003353': 0, 'dev-1767916109151': 0, 'dev-1767916167575': 0, 'dev-1767916206734': 285000, 'dev-1767916247917': 88000, 'dev-1767917169762': 0, 'dev-1767917190001': 0 } },
-  { id: 'plan-1767916543506', name: 'T플랜세이브', price: 33000, subsidy: { 's25-ultra': 0, 's25-plus': 0, 's25-base': 0, 'iphone-16-pro': 255000, 'dev-1767915282122': 0, 'dev-1767915303673': 0, 'dev-1767915327593': 0, 'dev-1767915340737': 0, 'dev-1767915359969': 0, 'dev-1767915389512': 0, 'dev-1767915429280': 0, 'dev-1767915442264': 0, 'dev-1767915493279': 0, 'dev-1767915504591': 0, 'dev-1767915524863': 0, 'dev-1767915570366': 0, 'dev-1767915712564': 0, 'dev-1767915766460': 0, 'dev-1767916003353': 0, 'dev-1767916109151': 0, 'dev-1767916167575': 0, 'dev-1767916206734': 270000, 'dev-1767916247917': 88000, 'dev-1767917169762': 0, 'dev-1767917190001': 0 } },
-  { id: 'plan-1767916558442', name: 'Zem플랜베스트', price: 26000, subsidy: { 's25-ultra': 0, 's25-plus': 0, 's25-base': 0, 'iphone-16-pro': 255000, 'dev-1767915282122': 0, 'dev-1767915303673': 0, 'dev-1767915327593': 0, 'dev-1767915340737': 0, 'dev-1767915359969': 0, 'dev-1767915389512': 0, 'dev-1767915429280': 0, 'dev-1767915442264': 0, 'dev-1767915493279': 0, 'dev-1767915504591': 0, 'dev-1767915524863': 0, 'dev-1767915570366': 0, 'dev-1767915712564': 0, 'dev-1767915766460': 0, 'dev-1767916003353': 0, 'dev-1767916109151': 0, 'dev-1767916167575': 0, 'dev-1767916206734': 270000, 'dev-1767916247917': 88000, 'dev-1767917169762': -2, 'dev-1767917190001': 0 } },
-  { id: 'plan-1767916567289', name: 'Zem플랜스마트', price: 19800, subsidy: { 's25-ultra': 0, 's25-plus': 0, 's25-base': 0, 'iphone-16-pro': 255000, 'dev-1767915282122': 0, 'dev-1767915303673': 0, 'dev-1767915327593': -2, 'dev-1767915340737': 0, 'dev-1767915359969': 0, 'dev-1767915389512': 0, 'dev-1767915429280': 0, 'dev-1767915442264': 0, 'dev-1767915493279': 0, 'dev-1767915504591': 0, 'dev-1767915524863': 0, 'dev-1767915570366': 0, 'dev-1767915712564': 0, 'dev-1767915766460': 0, 'dev-1767916003353': 0, 'dev-1767916109151': -1, 'dev-1767916167575': 0, 'dev-1767916206734': 270000, 'dev-1767916247917': 88000, 'dev-1767917169762': 224000, 'dev-1767917190001': 245000 } },
+  { id: '5gx-premium', name: '5GX 프리미엄', price: 109000, subsidy: { 's25-ultra': 500000, 's25-plus': 500000, 's25-base': 500000, 'dev-1767915282122': 220000, 'dev-1767915303673': 220000, 'dev-1767915327593': 450000, 'dev-1767915340737': 450000, 'dev-1767915359969': 450000, 'dev-1767915389512': 450000, 'dev-1767915429280': 450000, 'dev-1767915442264': 450000, 'dev-1767915493279': 500000, 'dev-1767915504591': 500000, 'dev-1767915524863': 600000, 'dev-1767915570366': 600000, 'dev-1767915712564': 500000, 'dev-1767915766460': 500000, 'dev-1767916003353': 500000, 'dev-1767916109151': 530000, 'dev-1767916167575': 357000, 'dev-1767916206734': 293400, 'dev-1767916247917': 130000, 'dev-1767917169762': 600000, 'dev-1767917190001': 600000 } },
+  { id: '5gx-prime-plus', name: '5GX 프라임플러스', price: 99000, subsidy: { 's25-ultra': 490000, 's25-plus': 490000, 's25-base': 490000, 'dev-1767915282122': 180000, 'dev-1767915303673': 180000, 'dev-1767915327593': 430000, 'dev-1767915340737': 430000, 'dev-1767915359969': 430000, 'dev-1767915389512': 430000, 'dev-1767915429280': 430000, 'dev-1767915442264': 430000, 'dev-1767915493279': 490000, 'dev-1767915504591': 490000, 'dev-1767915524863': 590000, 'dev-1767915570366': 590000, 'dev-1767915712564': 490000, 'dev-1767915766460': 490000, 'dev-1767916003353': 490000, 'dev-1767916109151': 500000, 'dev-1767916167575': 340000, 'dev-1767916206734': 293400, 'dev-1767916247917': 130000, 'dev-1767917169762': 590000, 'dev-1767917190001': 590000 } },
+  { id: '5gx-prime', name: '5GX 프라임', price: 89000, subsidy: { 's25-ultra': 480000, 's25-plus': 480000, 's25-base': 480000, 'dev-1767915282122': 150000, 'dev-1767915303673': 150000, 'dev-1767915327593': 420000, 'dev-1767915340737': 420000, 'dev-1767915359969': 420000, 'dev-1767915389512': 420000, 'dev-1767915429280': 420000, 'dev-1767915442264': 420000, 'dev-1767915493279': 480000, 'dev-1767915504591': 480000, 'dev-1767915524863': 580000, 'dev-1767915570366': 580000, 'dev-1767915712564': 480000, 'dev-1767915766460': 480000, 'dev-1767916003353': 480000, 'dev-1767916109151': 480000, 'dev-1767916167575': 320000, 'dev-1767916206734': 293400, 'dev-1767916247917': 130000, 'dev-1767917169762': 580000, 'dev-1767917190001': 580000 } },
+  { id: 'plan-1767916389004', name: '5GX 레귤러플러스', price: 79000, subsidy: { 's25-ultra': 453000, 's25-plus': 453000, 's25-base': 453000, 'dev-1767915282122': 135000, 'dev-1767915303673': 135000, 'dev-1767915327593': 393000, 'dev-1767915340737': 393000, 'dev-1767915359969': 393000, 'dev-1767915389512': 393000, 'dev-1767915429280': 393000, 'dev-1767915442264': 393000, 'dev-1767915493279': 453000, 'dev-1767915504591': 453000, 'dev-1767915524863': 553000, 'dev-1767915570366': 553000, 'dev-1767915712564': 453000, 'dev-1767915766460': 453000, 'dev-1767916003353': 453000, 'dev-1767916109151': 425000, 'dev-1767916167575': 283000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 553000, 'dev-1767917190001': 553000 } },
+  { id: '5gx-regular', name: '5GX 레귤러', price: 69000, subsidy: { 's25-ultra': 420000, 's25-plus': 420000, 's25-base': 420000, 'dev-1767915282122': 118000, 'dev-1767915303673': 118000, 'dev-1767915327593': 360000, 'dev-1767915340737': 360000, 'dev-1767915359969': 360000, 'dev-1767915389512': 360000, 'dev-1767915429280': 360000, 'dev-1767915442264': 360000, 'dev-1767915493279': 420000, 'dev-1767915504591': 420000, 'dev-1767915524863': 520000, 'dev-1767915570366': 520000, 'dev-1767915712564': 420000, 'dev-1767915766460': 420000, 'dev-1767916003353': 420000, 'dev-1767916109151': 355000, 'dev-1767916167575': 248000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 520000, 'dev-1767917190001': 520000 } },
+  { id: 'plan-1767916423859', name: '5GX 베이직플러스', price: 59000, subsidy: { 's25-ultra': 395000, 's25-plus': 395000, 's25-base': 395000, 'dev-1767915282122': 112000, 'dev-1767915303673': 112000, 'dev-1767915327593': 335000, 'dev-1767915340737': 335000, 'dev-1767915359969': 335000, 'dev-1767915389512': 335000, 'dev-1767915429280': 335000, 'dev-1767915442264': 335000, 'dev-1767915493279': 395000, 'dev-1767915504591': 395000, 'dev-1767915524863': 495000, 'dev-1767915570366': 495000, 'dev-1767915712564': 395000, 'dev-1767915766460': 395000, 'dev-1767916003353': 395000, 'dev-1767916109151': 336000, 'dev-1767916167575': 239000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 495000, 'dev-1767917190001': 495000 } },
+  { id: '5gx-slim', name: '5GX 슬림', price: 55000, subsidy: { 's25-ultra': 370000, 's25-plus': 370000, 's25-base': 370000, 'dev-1767915282122': 107000, 'dev-1767915303673': 107000, 'dev-1767915327593': 310000, 'dev-1767915340737': 310000, 'dev-1767915359969': 310000, 'dev-1767915389512': 310000, 'dev-1767915429280': 310000, 'dev-1767915442264': 310000, 'dev-1767915493279': 370000, 'dev-1767915504591': 370000, 'dev-1767915524863': 470000, 'dev-1767915570366': 470000, 'dev-1767915712564': 370000, 'dev-1767915766460': 370000, 'dev-1767916003353': 370000, 'dev-1767916109151': 316000, 'dev-1767916167575': 230000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 470000, 'dev-1767917190001': 470000 } },
+  { id: 'plan-1767916466435', name: '5GX 베이직', price: 49000, subsidy: { 's25-ultra': 333000, 's25-plus': 333000, 's25-base': 333000, 'dev-1767915282122': 100000, 'dev-1767915303673': 100000, 'dev-1767915327593': 273000, 'dev-1767915340737': 273000, 'dev-1767915359969': 273000, 'dev-1767915389512': 273000, 'dev-1767915429280': 273000, 'dev-1767915442264': 273000, 'dev-1767915493279': 333000, 'dev-1767915504591': 333000, 'dev-1767915524863': 433000, 'dev-1767915570366': 433000, 'dev-1767915712564': 333000, 'dev-1767915766460': 333000, 'dev-1767916003353': 333000, 'dev-1767916109151': 287000, 'dev-1767916167575': 215000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 433000, 'dev-1767917190001': 433000 } },
+  { id: 'plan-1767916494610', name: '5GX 컴팩트플러스', price: 45000, subsidy: { 's25-ultra': 315000, 's25-plus': 315000, 's25-base': 315000, 'dev-1767915282122': 88000, 'dev-1767915303673': 88000, 'dev-1767915327593': 255000, 'dev-1767915340737': 255000, 'dev-1767915359969': 255000, 'dev-1767915389512': 255000, 'dev-1767915429280': 255000, 'dev-1767915442264': 255000, 'dev-1767915493279': 310000, 'dev-1767915504591': 310000, 'dev-1767915524863': 410000, 'dev-1767915570366': 410000, 'dev-1767915712564': 315000, 'dev-1767915766460': 315000, 'dev-1767916003353': 315000, 'dev-1767916109151': 265000, 'dev-1767916167575': 195000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 415000, 'dev-1767917190001': 415000 } },
+  { id: 'plan-1767916505570', name: '0틴5G', price: 45000, subsidy: { 's25-ultra': 315000, 's25-plus': 315000, 's25-base': 315000, 'dev-1767915282122': 88000, 'dev-1767915303673': 88000, 'dev-1767915327593': 255000, 'dev-1767915340737': 255000, 'dev-1767915359969': 255000, 'dev-1767915389512': 255000, 'dev-1767915429280': 255000, 'dev-1767915442264': 255000, 'dev-1767915493279': 310000, 'dev-1767915504591': 310000, 'dev-1767915524863': 410000, 'dev-1767915570366': 410000, 'dev-1767915712564': 315000, 'dev-1767915766460': 315000, 'dev-1767916003353': 315000, 'dev-1767916109151': 265000, 'dev-1767916167575': 195000, 'dev-1767916206734': 293400, 'dev-1767916247917': 98000, 'dev-1767917169762': 415000, 'dev-1767917190001': 415000 } },
+  { id: 'plan-1767916528994', name: '5GX 컴팩트', price: 39000, subsidy: { 'dev-1767916206734': 285000, 'dev-1767916247917': 88000 } },
+  { id: 'plan-1767916543506', name: 'T플랜세이브', price: 33000, subsidy: { 'dev-1767916206734': 270000, 'dev-1767916247917': 88000 } },
+  { id: 'plan-1767916558442', name: 'Zem플랜베스트', price: 26000, subsidy: { 'dev-1767916206734': 270000, 'dev-1767916247917': 88000 } },
+  { id: 'plan-1767916567289', name: 'Zem플랜스마트', price: 19800, subsidy: { 'dev-1767916206734': 270000, 'dev-1767916247917': 88000, 'dev-1767917169762': 224000, 'dev-1767917190001': 245000 } },
 ];
-
 
 const CATEGORIES = [
   { id: 'foldable', name: '폴더블', icon: 'fa-mobile-v' },
@@ -120,6 +120,7 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, maintenanceMonths: months }));
   }, [state.discountType]);
 
+  // 실시간 로컬 저장 로직 (브라우저 메모리 동기화)
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_DEVICES, JSON.stringify(devices));
     localStorage.setItem(STORAGE_KEY_PLANS, JSON.stringify(plans));
@@ -216,7 +217,19 @@ const App: React.FC = () => {
   };
 
   const getExportCode = () => `${formatAsCode(devices, 'SktDevice')}\n\n${formatAsCode(plans, 'SktPlan')}`;
-  const copyToClipboard = () => { navigator.clipboard.writeText(getExportCode()); alert('소스 코드가 클립보드에 복사되었습니다.'); };
+  
+  // 명시적 저장 및 소스코드 안내
+  const handleManualSave = () => {
+    localStorage.setItem(STORAGE_KEY_DEVICES, JSON.stringify(devices));
+    localStorage.setItem(STORAGE_KEY_PLANS, JSON.stringify(plans));
+    alert('✅ 데이터가 브라우저에 안전하게 저장되었습니다.\n\n[알림] 소스 코드(App.tsx)에도 이 내용을 반영하려면 [시스템 데이터 추출] 버튼을 눌러 코드를 복사한 뒤 App.tsx의 상수를 교체해 주세요.');
+  };
+
+  const copyToClipboard = () => { 
+    navigator.clipboard.writeText(getExportCode()); 
+    alert('📋 소스 코드가 클립보드에 복사되었습니다.\n\nApp.tsx 상단의 DEFAULT_DEVICES와 DEFAULT_PLANS 상수를 이 내용으로 덮어쓰시면 영구적으로 반영됩니다.'); 
+  };
+
   const updateDeviceOrder = (id: string, order: number) => setDevices(devices.map(d => d.id === id ? { ...d, order } : d));
   const updateDevicePrice = (id: string, price: number) => setDevices(devices.map(d => d.id === id ? { ...d, price } : d));
   const updateDeviceCategory = (id: string, category: DeviceCategory) => setDevices(devices.map(d => d.id === id ? { ...d, category } : d));
@@ -229,7 +242,7 @@ const App: React.FC = () => {
     else { alert('아이디 또는 비밀번호가 올바르지 않습니다.'); }
   };
 
-  const resetData = () => { if (confirm('모든 데이터를 초기 설정으로 되돌리시겠습니까?')) { localStorage.removeItem(STORAGE_KEY_DEVICES); localStorage.removeItem(STORAGE_KEY_PLANS); window.location.reload(); } };
+  const resetData = () => { if (confirm('⚠️ 모든 데이터를 초기 설정(App.tsx에 정의된 값)으로 되돌리시겠습니까?')) { localStorage.removeItem(STORAGE_KEY_DEVICES); localStorage.removeItem(STORAGE_KEY_PLANS); window.location.reload(); } };
 
   if (!results) return null;
 
@@ -245,7 +258,10 @@ const App: React.FC = () => {
             </div>
           </div>
           {isAdmin && (
-            <button onClick={() => setIsAdmin(false)} className="px-6 py-3 rounded-2xl text-sm font-black bg-slate-800 text-white transition-all shadow-md hover:bg-slate-700">관리 종료</button>
+            <div className="flex gap-2">
+               <button onClick={handleManualSave} className="px-6 py-3 rounded-2xl text-sm font-black bg-green-600 text-white transition-all shadow-lg hover:bg-green-700 animate-pulse-slow">데이터 저장</button>
+               <button onClick={() => setIsAdmin(false)} className="px-6 py-3 rounded-2xl text-sm font-black bg-slate-800 text-white transition-all shadow-md hover:bg-slate-700">관리 종료</button>
+            </div>
           )}
         </div>
       </header>
@@ -272,8 +288,8 @@ const App: React.FC = () => {
           <div className="bg-slate-900 rounded-3xl p-8 shadow-2xl border-4 border-slate-800 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-10 opacity-10"><i className="fas fa-code text-8xl text-white"></i></div>
             <div className="relative z-10">
-              <h2 className="text-xl font-black text-white mb-2 flex items-center gap-2"><i className="fas fa-file-code text-blue-400"></i> 시스템 데이터 추출</h2>
-              <p className="text-slate-400 text-sm mb-6">현재 설정을 소스 코드 상수에 반영하려면 아래 코드를 복사하세요.</p>
+              <h2 className="text-xl font-black text-white mb-2 flex items-center gap-2"><i className="fas fa-file-code text-blue-400"></i> 시스템 데이터 추출 (App.tsx 반영용)</h2>
+              <p className="text-slate-400 text-sm mb-6">수정한 내용을 소스 코드에 영구적으로 고정하려면 아래 코드를 복사하여 App.tsx를 업데이트하세요.</p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <button onClick={() => setShowExportModal(true)} className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black transition-all flex items-center gap-2 shadow-lg shadow-blue-900/40"><i className="fas fa-eye"></i> 코드 보기</button>
                 <button onClick={copyToClipboard} className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-black transition-all flex items-center gap-2"><i className="fas fa-copy"></i> 클립보드 복사</button>
@@ -360,7 +376,10 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="text-center pt-4"><button onClick={resetData} className="px-8 py-4 bg-slate-200 hover:bg-red-100 hover:text-red-700 text-slate-600 rounded-2xl font-black transition-all"><i className="fas fa-undo mr-2"></i> 데이터 초기화</button></div>
+          <div className="text-center pt-4 flex justify-center gap-4">
+             <button onClick={handleManualSave} className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black transition-all shadow-lg flex items-center gap-2"><i className="fas fa-save"></i> 현재 설정 저장</button>
+             <button onClick={resetData} className="px-8 py-4 bg-slate-200 hover:bg-red-100 hover:text-red-700 text-slate-600 rounded-2xl font-black transition-all flex items-center gap-2"><i className="fas fa-undo"></i> 데이터 초기화</button>
+          </div>
 
           {showExportModal && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
@@ -474,7 +493,7 @@ const App: React.FC = () => {
 
       <footer className="max-w-6xl mx-auto px-6 mt-12 mb-12 text-center relative">
         <div className="w-20 h-2 bg-gradient-to-r from-[#E2000F] to-[#F37321] mx-auto rounded-full mb-6 shadow-sm opacity-50"></div>
-        <p className="text-slate-400 text-xs font-black uppercase tracking-[0.4em]">SK TELECOM SALES CONSULTING • PROFESSIONAL v4.1</p>
+        <p className="text-slate-400 text-xs font-black uppercase tracking-[0.4em]">SK TELECOM SALES CONSULTING • PROFESSIONAL v4.2</p>
         <button onClick={() => isAdmin ? setIsAdmin(false) : setShowLogin(true)} className="absolute right-6 bottom-0 text-slate-300 hover:text-slate-500 transition-colors" title="관리자 설정"><i className="fas fa-cog text-lg"></i></button>
       </footer>
     </div>
