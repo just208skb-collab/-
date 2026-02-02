@@ -104,6 +104,7 @@ const App: React.FC = () => {
     paymentMethod: PaymentMethod.INSTALLMENT,
     employeeDiscount: 0,
     useFamilyDiscount: false,
+    internetDiscount: 0,
     maintenanceMonths: 4,
   });
 
@@ -125,6 +126,8 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEY_PLANS, JSON.stringify(plans));
   }, [devices, plans]);
 
+  const formatKrw = (val: number) => new Intl.NumberFormat('ko-KR').format(val) + '원';
+
   const selectedDevice = useMemo(() => devices.find(d => d.id === state.deviceId) || sortedDevices[0], [devices, sortedDevices, state.deviceId]);
   const initialPlan = useMemo(() => plans.find(p => p.id === state.initialPlanId) || sortedPlans[0], [plans, sortedPlans, state.initialPlanId]);
   const afterPlan = useMemo(() => plans.find(p => p.id === state.afterPlanId) || sortedPlans[sortedPlans.length - 1], [plans, sortedPlans, state.afterPlanId]);
@@ -144,8 +147,8 @@ const App: React.FC = () => {
     const calcFee = (plan: SktPlan) => {
       const contractDiscount = state.discountType === DiscountType.CONTRACT ? Math.floor(plan.price * 0.25) : 0;
       const familyDiscount = state.useFamilyDiscount ? Math.floor(plan.price * 0.30) : 0;
-      const finalFee = Math.max(0, plan.price - contractDiscount - familyDiscount);
-      return { finalFee, contractDiscount, familyDiscount };
+      const finalFee = Math.max(0, plan.price - contractDiscount - familyDiscount - state.internetDiscount);
+      return { finalFee, contractDiscount, familyDiscount, internetDiscount: state.internetDiscount };
     };
     const initialFeeData = calcFee(initialPlan);
     const afterFeeData = calcFee(afterPlan);
@@ -159,8 +162,6 @@ const App: React.FC = () => {
     }
     return { principal, subsidy, monthlyInstallment, totalInterest, initial: { ...initialFeeData, total: m1 }, after: { ...afterFeeData, total: m2 }, total2Year };
   }, [state, selectedDevice, initialPlan, afterPlan]);
-
-  const formatKrw = (val: number) => new Intl.NumberFormat('ko-KR').format(val) + '원';
 
   const estimateSubsidy = (devicePrice: number, planPrice: number): number => {
     let ratio = 0;
@@ -458,11 +459,56 @@ const App: React.FC = () => {
 
               <section className="bg-white p-8 rounded-[2.5rem] shadow-xl border-2 border-slate-100 space-y-6">
                 <div className="flex items-center gap-3 border-b-2 border-slate-50 pb-4"><i className="fas fa-layer-group text-[#F37321] text-xl"></i><h3 className="text-lg font-black text-slate-900 uppercase">요금제 설계</h3></div>
+                
                 <div className="space-y-4">
-                  <div><label className="block text-xs font-black text-slate-400 mb-1 tracking-tighter">유지 요금제 (M+{state.maintenanceMonths})</label><select className="w-full px-5 py-4 rounded-2xl border-4 border-slate-100 bg-slate-50 font-black text-lg text-slate-900 outline-none" value={state.initialPlanId} onChange={(e) => setState({...state, initialPlanId: e.target.value})}>{sortedPlans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-                  <div><label className="block text-xs font-black text-slate-400 mb-1 tracking-tighter">변경 후 요금제</label><select className="w-full px-5 py-4 rounded-2xl border-4 border-slate-100 bg-slate-50 font-black text-lg text-slate-900 outline-none" value={state.afterPlanId} onChange={(e) => setState({...state, afterPlanId: e.target.value})}>{sortedPlans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-400 mb-1 tracking-tighter">유지 요금제 (M+{state.maintenanceMonths})</label>
+                    <select 
+                      className="w-full px-5 py-4 rounded-2xl border-4 border-slate-100 bg-slate-50 font-black text-lg text-slate-900 outline-none" 
+                      value={state.initialPlanId} 
+                      onChange={(e) => setState({...state, initialPlanId: e.target.value})}
+                    >
+                      {sortedPlans.map(p => <option key={p.id} value={p.id}>{p.name} ({formatKrw(p.price)})</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-400 mb-1 tracking-tighter">변경 후 요금제</label>
+                    <select 
+                      className="w-full px-5 py-4 rounded-2xl border-4 border-slate-100 bg-slate-50 font-black text-lg text-slate-900 outline-none" 
+                      value={state.afterPlanId} 
+                      onChange={(e) => setState({...state, afterPlanId: e.target.value})}
+                    >
+                      {sortedPlans.map(p => <option key={p.id} value={p.id}>{p.name} ({formatKrw(p.price)})</option>)}
+                    </select>
+                  </div>
                 </div>
-                <div className="bg-slate-50 p-6 rounded-3xl flex items-center justify-between border-2 border-slate-100 cursor-pointer shadow-sm" onClick={() => setState({...state, useFamilyDiscount: !state.useFamilyDiscount})}><div><h4 className="text-base font-black text-slate-800 transition">SKT 온가족할인 적용</h4><p className="text-[10px] text-slate-400 font-bold">기본료 30% 추가 할인</p></div><div className={`w-16 h-8 rounded-full relative transition-all duration-300 shadow-inner ${state.useFamilyDiscount ? 'bg-[#E2000F]' : 'bg-slate-300'}`}><div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 ${state.useFamilyDiscount ? 'translate-x-9' : 'translate-x-1'}`}></div></div></div>
+
+                <div className="space-y-4 pt-2">
+                  <div className="bg-slate-50 p-6 rounded-3xl flex items-center justify-between border-2 border-slate-100 cursor-pointer shadow-sm" onClick={() => setState({...state, useFamilyDiscount: !state.useFamilyDiscount})}>
+                    <div><h4 className="text-base font-black text-slate-800 transition">SKT 온가족할인 적용</h4><p className="text-[10px] text-slate-400 font-bold">기본료 30% 추가 할인</p></div>
+                    <div className={`w-16 h-8 rounded-full relative transition-all duration-300 shadow-inner ${state.useFamilyDiscount ? 'bg-[#E2000F]' : 'bg-slate-300'}`}>
+                      <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 ${state.useFamilyDiscount ? 'translate-x-9' : 'translate-x-1'}`}></div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-6 rounded-3xl border-2 border-slate-100 shadow-sm space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <h4 className="text-base font-black text-slate-800">인터넷 결합할인</h4>
+                      <p className="text-[10px] text-slate-400 font-bold leading-tight">요즘가족결합 1~2인 3,500원 / 3인이상 6,000원 할인</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[0, 3500, 6000].map((val) => (
+                        <button
+                          key={val}
+                          onClick={() => setState({...state, internetDiscount: val})}
+                          className={`py-3 rounded-2xl text-[11px] font-black transition-all border-2 ${state.internetDiscount === val ? 'bg-[#F37321] border-[#F37321] text-white shadow-md' : 'bg-slate-50 border-slate-50 text-slate-500'}`}
+                        >
+                          {val === 0 ? '없음' : `${val.toLocaleString()}원`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </section>
             </div>
 
@@ -480,13 +526,25 @@ const App: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border-2 border-slate-100 flex flex-col h-full relative">
                   <div className="flex items-center gap-3 mb-8"><div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 text-xl shadow-inner"><i className="fas fa-hourglass-start"></i></div><div><h4 className="text-lg font-black text-slate-900">변경 전 {state.maintenanceMonths}개월</h4><p className="text-[11px] text-slate-400 font-black uppercase tracking-widest">Initial Fee</p></div></div>
-                  <div className="space-y-4 flex-1"><div className="flex justify-between text-sm font-black"><span className="text-slate-500 tracking-tighter">기본료 ({initialPlan.name})</span><span className="text-slate-900">{formatKrw(initialPlan.price)}</span></div>{results.initial.contractDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#E2000F]"><span className="tracking-tighter">선택약정(25%)</span><span>-{formatKrw(results.initial.contractDiscount)}</span></div>)}{results.initial.familyDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#F37321]"><span className="tracking-tighter">온가족할인(30%)</span><span>-{formatKrw(results.initial.familyDiscount)}</span></div>)}<div className="flex justify-between text-sm font-black pt-2 border-t border-slate-50"><span className="text-slate-500 tracking-tighter">단말기 할부금</span><span className="text-slate-900">{formatKrw(results.monthlyInstallment)}</span></div></div>
+                  <div className="space-y-4 flex-1">
+                    <div className="flex justify-between text-sm font-black"><span className="text-slate-500 tracking-tighter">기본료 ({initialPlan.name})</span><span className="text-slate-900">{formatKrw(initialPlan.price)}</span></div>
+                    {results.initial.contractDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#E2000F]"><span className="tracking-tighter">선택약정(25%)</span><span>-{formatKrw(results.initial.contractDiscount)}</span></div>)}
+                    {results.initial.familyDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#F37321]"><span className="tracking-tighter">온가족할인(30%)</span><span>-{formatKrw(results.initial.familyDiscount)}</span></div>)}
+                    {results.initial.internetDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#F37321]"><span className="tracking-tighter">유선결합할인</span><span>-{formatKrw(results.initial.internetDiscount)}</span></div>)}
+                    <div className="flex justify-between text-sm font-black pt-2 border-t border-slate-50"><span className="text-slate-500 tracking-tighter">단말기 할부금</span><span className="text-slate-900">{formatKrw(results.monthlyInstallment)}</span></div>
+                  </div>
                   <div className="mt-8 pt-6 border-t-4 border-slate-100 flex justify-between items-end gap-2"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">월 예상 납부액</span><span className="text-xl lg:text-2xl font-black text-slate-900 leading-none whitespace-nowrap">{formatKrw(results.initial.total)}</span></div>
                 </div>
                 <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border-4 border-[#E2000F]/20 flex flex-col h-full relative">
                   <div className="absolute top-0 right-0 bg-[#E2000F] text-white text-[10px] font-black px-5 py-2 rounded-bl-2xl shadow-md">OPTIMAL DESIGN</div>
                   <div className="flex items-center gap-3 mb-8"><div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-[#E2000F] text-xl shadow-inner"><i className="fas fa-check-double"></i></div><div><h4 className="text-lg font-black text-slate-900">변경 후 {24 - state.maintenanceMonths}개월</h4><p className="text-[11px] text-slate-400 font-black uppercase tracking-widest">Post-Period Fee</p></div></div>
-                  <div className="space-y-4 flex-1"><div className="flex justify-between text-sm font-black"><span className="text-slate-500 tracking-tighter">기본료 ({afterPlan.name})</span><span className="text-slate-900">{formatKrw(afterPlan.price)}</span></div>{results.after.contractDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#E2000F]"><span className="tracking-tighter">선택약정(25%)</span><span>-{formatKrw(results.after.contractDiscount)}</span></div>)}{results.after.familyDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#F37321]"><span className="tracking-tighter">온가족할인(30%)</span><span>-{formatKrw(results.after.familyDiscount)}</span></div>)}<div className="flex justify-between text-sm font-black pt-2 border-t border-slate-50"><span className="text-slate-500 tracking-tighter">단말기 할부금</span><span className="text-slate-900">{formatKrw(results.monthlyInstallment)}</span></div></div>
+                  <div className="space-y-4 flex-1">
+                    <div className="flex justify-between text-sm font-black"><span className="text-slate-500 tracking-tighter">기본료 ({afterPlan.name})</span><span className="text-slate-900">{formatKrw(afterPlan.price)}</span></div>
+                    {results.after.contractDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#E2000F]"><span className="tracking-tighter">선택약정(25%)</span><span>-{formatKrw(results.after.contractDiscount)}</span></div>)}
+                    {results.after.familyDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#F37321]"><span className="tracking-tighter">온가족할인(30%)</span><span>-{formatKrw(results.after.familyDiscount)}</span></div>)}
+                    {results.after.internetDiscount > 0 && (<div className="flex justify-between text-sm font-black text-[#F37321]"><span className="tracking-tighter">유선결합할인</span><span>-{formatKrw(results.after.internetDiscount)}</span></div>)}
+                    <div className="flex justify-between text-sm font-black pt-2 border-t border-slate-50"><span className="text-slate-500 tracking-tighter">단말기 할부금</span><span className="text-slate-900">{formatKrw(results.monthlyInstallment)}</span></div>
+                  </div>
                   <div className="mt-8 pt-6 border-t-4 border-[#E2000F]/10 flex justify-between items-end gap-2"><span className="text-[10px] font-black text-[#E2000F] uppercase tracking-widest leading-none mb-1">월 예상 납부액</span><span className="text-xl lg:text-2xl font-black text-[#E2000F] leading-none whitespace-nowrap">{formatKrw(results.after.total)}</span></div>
                 </div>
               </div>
@@ -515,7 +573,7 @@ const App: React.FC = () => {
       <footer className="max-w-6xl mx-auto px-6 mt-12 mb-12 text-center relative">
         <div className="w-20 h-2 bg-gradient-to-r from-[#E2000F] to-[#F37321] mx-auto rounded-full mb-6 shadow-sm opacity-50"></div>
         <p className="text-slate-400 text-xs font-black uppercase tracking-[0.4em]">SK TELECOM SALES CONSULTING • PROFESSIONAL v4.3</p>
-        <button onClick={() => isAdmin ? setIsAdmin(false) : setShowLogin(true)} className="absolute right-6 bottom-0 text-slate-300 hover:text-slate-500 transition-colors" title="관리자 설정"><i className="fas fa-cog text-lg"></i></button>
+        <button onClick={() => isAdmin ? setIsAdmin(false) : setShowLogin(true)} className="absolute right-6 bottom-0 text-slate-300 pointer-events-auto hover:text-slate-500 transition-colors" title="관리자 설정"><i className="fas fa-cog text-lg"></i></button>
       </footer>
     </div>
   );

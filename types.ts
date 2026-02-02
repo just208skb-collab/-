@@ -34,5 +34,6 @@ export interface CalculatorState {
   paymentMethod: PaymentMethod;
   employeeDiscount: number;
   useFamilyDiscount: boolean;
+  internetDiscount: number;
   maintenanceMonths: number;
 }
