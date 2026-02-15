@@ -1,10 +1,17 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { DiscountType, PaymentMethod, SktPlan, SktDevice, CalculatorState, DeviceCategory } from './types';
 
 // [시스템 안내] 아래 DEFAULT 데이터는 관리자 모드에서 추출한 최신 데이터를 기반으로 동기화되었습니다.
 const STORAGE_KEY_DEVICES = 'skt_opt_devices_v4';
 const STORAGE_KEY_PLANS = 'skt_opt_plans_v4';
+
+// [시스템 수정] 관리자 시크릿 이미지 & 비밀번호
+const SECRET_IMAGE_URL = 'https://i.postimg.cc/LXTM0WcZ/20260215.png'; 
+const SECRET_PASSWORD = '6091'; 
+
+// [시스템 수정] Tally 폼 주소 연결 (대표님이 만드신 주소 적용 완료)
+const CONSULT_FORM_URL = 'https://tally.so/r/0Q64kA'; 
+const PURCHASE_FORM_URL = 'https://tally.so/r/aQYWkZ'; 
 
 const DEFAULT_DEVICES: SktDevice[] = [
   { id: 'dev-1767915504591', name: '갤럭시 Z 폴드7 (256GB)', price: 2379300, category: 'foldable', order: 1 },
@@ -71,6 +78,14 @@ const App: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [loginId, setLoginId] = useState('');
   const [loginPw, setLoginPw] = useState('');
+
+  // [시스템 수정] 시크릿/폼 모달 관련 State
+  const [showSecretModal, setShowSecretModal] = useState(false);
+  const [secretPw, setSecretPw] = useState('');
+  const [isSecretUnlocked, setIsSecretUnlocked] = useState(false);
+  
+  const [showConsultModal, setShowConsultModal] = useState(false);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
   const [userCategory, setUserCategory] = useState<DeviceCategory>('s-series');
 
@@ -241,7 +256,37 @@ const App: React.FC = () => {
     else { alert('아이디 또는 비밀번호가 올바르지 않습니다.'); }
   };
 
+  const handleSecretLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (secretPw === SECRET_PASSWORD) {
+        setIsSecretUnlocked(true);
+        setSecretPw('');
+    } else {
+        alert('비밀번호가 일치하지 않습니다.');
+    }
+  };
+
   const resetData = () => { if (confirm('⚠️ 모든 데이터를 초기 설정으로 되돌리시겠습니까?')) { localStorage.removeItem(STORAGE_KEY_DEVICES); localStorage.removeItem(STORAGE_KEY_PLANS); window.location.reload(); } };
+
+  // Common Modal Component for Forms (팝업 창 컴포넌트)
+  const EmbedModal = ({ isOpen, onClose, title, url }: { isOpen: boolean; onClose: () => void; title: string; url: string }) => {
+    if (!isOpen) return null;
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+        <div className="bg-white rounded-[2rem] w-full max-w-2xl h-[90vh] shadow-2xl flex flex-col overflow-hidden relative">
+          <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+            <h3 className="text-lg font-black text-slate-800 flex items-center gap-2"><i className="fas fa-paper-plane text-[#E2000F]"></i> {title}</h3>
+            <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-300 hover:text-slate-700 transition-colors">
+              <i className="fas fa-times text-lg"></i>
+            </button>
+          </div>
+          <div className="flex-1 w-full h-full bg-slate-50">
+             <iframe src={url} className="w-full h-full border-0" title={title}></iframe>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   if (!results) return null;
 
@@ -265,6 +310,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
+      {/* Admin Login Modal */}
       {showLogin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-[2rem] p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
@@ -281,6 +327,66 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* [시스템 수정] Secret Modal (잘림 방지 및 스크롤 개선 적용됨) */}
+      {showSecretModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-[2rem] w-full max-w-2xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                    <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                        <i className="fas fa-user-secret text-slate-400"></i>
+                        관리자 전용 뷰어
+                    </h3>
+                    <button onClick={() => { setShowSecretModal(false); setIsSecretUnlocked(false); setSecretPw(''); }} className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-300 hover:text-slate-700 transition-colors">
+                        <i className="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50">
+                    {!isSecretUnlocked ? (
+                        <div className="flex flex-col items-center justify-center h-full p-8 min-h-[300px]">
+                            <div className="w-full max-w-sm space-y-6 text-center animate-in zoom-in duration-300">
+                                <div className="w-20 h-20 bg-slate-100 rounded-full mx-auto flex items-center justify-center text-slate-400 mb-4">
+                                    <i className="fas fa-lock text-3xl"></i>
+                                </div>
+                                <div>
+                                    <h4 className="text-xl font-black text-slate-900 mb-2">보안 접근 확인</h4>
+                                    <p className="text-slate-500 text-sm font-bold">권한이 있는 관리자만 접근할 수 있습니다.</p>
+                                </div>
+                                <form onSubmit={handleSecretLogin} className="space-y-4">
+                                    <input 
+                                        type="password" 
+                                        placeholder="비밀번호 입력" 
+                                        className="w-full px-6 py-4 rounded-2xl border-4 border-slate-100 focus:border-[#F37321] outline-none font-black text-center text-lg transition-all" 
+                                        value={secretPw} 
+                                        onChange={(e) => setSecretPw(e.target.value)} 
+                                        autoFocus
+                                    />
+                                    <button type="submit" className="w-full py-4 rounded-2xl bg-[#F37321] text-white font-black hover:bg-[#d65f1a] transition-all shadow-lg text-lg">
+                                        확인
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="w-full animate-in fade-in duration-500">
+                            <img 
+                                src={SECRET_IMAGE_URL} 
+                                alt="Secret Content" 
+                                className="w-full h-auto block" 
+                                style={{ imageRendering: 'auto' }}
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+      )}
+      
+      {/* [시스템 수정] Tally 폼 팝업 모달 */}
+      <EmbedModal isOpen={showConsultModal} onClose={() => setShowConsultModal(false)} title="상담 신청" url={CONSULT_FORM_URL} />
+      <EmbedModal isOpen={showPurchaseModal} onClose={() => setShowPurchaseModal(false)} title="구매 신청" url={PURCHASE_FORM_URL} />
+
+
       {isAdmin ? (
         <div className="max-w-6xl mx-auto p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 flex-1">
           <div className="bg-slate-900 rounded-3xl p-8 shadow-2xl border-4 border-slate-800 relative overflow-hidden">
@@ -294,8 +400,8 @@ const App: React.FC = () => {
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-3xl shadow-xl border-2 border-slate-200 overflow-hidden">
+          
+           <div className="bg-white rounded-3xl shadow-xl border-2 border-slate-200 overflow-hidden">
             <div className="bg-slate-100 p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-2 border-slate-200">
               <h2 className="text-xl font-black text-slate-900 flex items-center gap-2"><i className="fas fa-mobile-screen text-[#E2000F]"></i> 단말기 관리</h2>
               <div className="flex flex-wrap gap-2 w-full sm:w-auto items-center">
@@ -373,13 +479,11 @@ const App: React.FC = () => {
               </table>
             </div>
           </div>
-
           <div className="text-center pt-4 flex justify-center gap-4">
-             <button onClick={handleManualSave} className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black transition-all shadow-lg flex items-center gap-2"><i className="fas fa-save"></i> 현재 설정 저장</button>
-             <button onClick={resetData} className="px-8 py-4 bg-slate-200 hover:bg-red-100 hover:text-red-700 text-slate-600 rounded-2xl font-black transition-all flex items-center gap-2"><i className="fas fa-undo"></i> 데이터 초기화</button>
+              <button onClick={handleManualSave} className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black transition-all shadow-lg flex items-center gap-2"><i className="fas fa-save"></i> 현재 설정 저장</button>
+              <button onClick={resetData} className="px-8 py-4 bg-slate-200 hover:bg-red-100 hover:text-red-700 text-slate-600 rounded-2xl font-black transition-all flex items-center gap-2"><i className="fas fa-undo"></i> 데이터 초기화</button>
           </div>
-
-          {showExportModal && (
+           {showExportModal && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
               <div className="bg-slate-900 text-white rounded-[2rem] w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in duration-300">
                 <div className="p-8 border-b border-white/10 flex justify-between items-center">
@@ -454,6 +558,15 @@ const App: React.FC = () => {
                     onChange={(e) => setState({...state, employeeDiscount: e.target.value === '' ? 0 : Number(e.target.value)})} 
                     placeholder="0" 
                   />
+                  {/* 할인단가표 보기 버튼 */}
+                  <div className="mt-2 text-right">
+                    <button 
+                        onClick={() => setShowSecretModal(true)}
+                        className="text-xs font-bold text-slate-400 hover:text-[#E2000F] hover:underline transition-all"
+                    >
+                        <i className="fas fa-search mr-1"></i>할인단가표 보기
+                    </button>
+                  </div>
                 </div>
               </section>
 
@@ -520,6 +633,22 @@ const App: React.FC = () => {
                   <div><span className="bg-white/20 backdrop-blur-md text-white text-sm font-black px-6 py-2.5 rounded-full uppercase tracking-widest border border-white/30 shadow-lg inline-block">최종 할부원금</span><div className="text-4xl lg:text-5xl font-black mt-6 tracking-tighter drop-shadow-2xl">{formatKrw(results.principal)}</div><p className="text-xs text-white/70 mt-4 font-bold bg-black/10 px-6 py-2 rounded-full inline-block">출고가 {formatKrw(selectedDevice.price)} {results.subsidy > 0 && ` - 지원금 ${formatKrw(results.subsidy)}`} {state.employeeDiscount > 0 && ` - 임직원할인 ${formatKrw(state.employeeDiscount)}`}</p></div>
                   <div className="flex flex-col items-center justify-center pt-8 border-t-2 border-white/20"><span className="text-white/80 text-sm font-black uppercase tracking-widest mb-1">24개월 총 소요 비용</span><div className="text-3xl lg:text-4xl font-black drop-shadow-sm">{formatKrw(results.total2Year)}</div></div>
                   <div className="grid grid-cols-2 gap-6 pt-2"><div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 border border-white/20 shadow-inner"><span className="text-white/70 text-xs font-black block mb-2 uppercase tracking-tighter">월 단말기 납부액</span><span className="text-xl lg:text-2xl font-black">{formatKrw(results.monthlyInstallment)}</span></div><div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 border border-white/20 shadow-inner"><span className="text-white/70 text-xs font-black block mb-2 uppercase tracking-tighter">2년간 총 이자(5.9%)</span><span className="text-xl lg:text-2xl font-black">{formatKrw(results.totalInterest)}</span></div></div>
+                  
+                  {/* [시스템 수정] 신청 버튼 영역 추가 */}
+                  <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/20">
+                    <button 
+                        onClick={() => setShowConsultModal(true)} 
+                        className="py-4 bg-white text-[#E2000F] rounded-2xl font-black text-lg shadow-lg hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
+                    >
+                        <i className="fas fa-headset"></i> 상담 신청
+                    </button>
+                    <button 
+                        onClick={() => setShowPurchaseModal(true)} 
+                        className="py-4 bg-slate-900 text-white rounded-2xl font-black text-lg shadow-lg hover:bg-black transition-all flex items-center justify-center gap-2 border border-white/20"
+                    >
+                        <i className="fas fa-cart-shopping"></i> 구매 신청
+                    </button>
+                  </div>
                 </div>
               </section>
               
