@@ -83,6 +83,7 @@ const App: React.FC = () => {
   const [showSecretModal, setShowSecretModal] = useState(false);
   const [secretPw, setSecretPw] = useState('');
   const [isSecretUnlocked, setIsSecretUnlocked] = useState(false);
+  const [isImageZoomed, setIsImageZoomed] = useState(false);
   
   const [showConsultModal, setShowConsultModal] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
@@ -336,12 +337,12 @@ const App: React.FC = () => {
                         <i className="fas fa-user-secret text-slate-400"></i>
                         관리자 전용 뷰어
                     </h3>
-                    <button onClick={() => { setShowSecretModal(false); setIsSecretUnlocked(false); setSecretPw(''); }} className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-300 hover:text-slate-700 transition-colors">
+                    <button onClick={() => { setShowSecretModal(false); setIsSecretUnlocked(false); setSecretPw(''); setIsImageZoomed(false); }} className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-300 hover:text-slate-700 transition-colors">
                         <i className="fas fa-times text-lg"></i>
                     </button>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50">
+                <div className={`flex-1 overflow-y-auto ${isImageZoomed ? 'overflow-x-auto' : 'overflow-x-hidden'} bg-slate-50 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent`}>
                     {!isSecretUnlocked ? (
                         <div className="flex flex-col items-center justify-center h-full p-8 min-h-[300px]">
                             <div className="w-full max-w-sm space-y-6 text-center animate-in zoom-in duration-300">
@@ -368,13 +369,44 @@ const App: React.FC = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="w-full animate-in fade-in duration-500">
-                            <img 
-                                src={SECRET_IMAGE_URL} 
-                                alt="Secret Content" 
-                                className="w-full h-auto block" 
-                                style={{ imageRendering: 'auto' }}
-                            />
+                        <div className="relative min-h-full flex flex-col items-center">
+                            {/* Floating Controls */}
+                            <div className="sticky top-4 z-10 flex gap-2 mb-4">
+                                <button 
+                                    onClick={() => setIsImageZoomed(!isImageZoomed)}
+                                    className="px-4 py-2 bg-white/90 backdrop-blur shadow-lg rounded-full text-xs font-black text-slate-700 border border-slate-200 hover:bg-white transition-all flex items-center gap-2"
+                                >
+                                    <i className={`fas ${isImageZoomed ? 'fa-search-minus' : 'fa-search-plus'}`}></i>
+                                    {isImageZoomed ? '축소하기' : '확대해서 보기'}
+                                </button>
+                                <a 
+                                    href={SECRET_IMAGE_URL} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2 bg-white/90 backdrop-blur shadow-lg rounded-full text-xs font-black text-slate-700 border border-slate-200 hover:bg-white transition-all flex items-center gap-2"
+                                >
+                                    <i className="fas fa-external-link-alt"></i>
+                                    원본 보기
+                                </a>
+                            </div>
+
+                            <div className={`w-full transition-all duration-300 ${isImageZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`} onClick={() => setIsImageZoomed(!isImageZoomed)}>
+                                <img 
+                                    src={SECRET_IMAGE_URL} 
+                                    alt="Secret Content" 
+                                    className={`block transition-all duration-300 ${isImageZoomed ? 'max-w-none w-[150%] sm:w-[200%]' : 'w-full h-auto'}`} 
+                                    style={{ 
+                                        imageRendering: 'high-quality',
+                                        WebkitFontSmoothing: 'antialiased'
+                                    }}
+                                />
+                            </div>
+                            
+                            {isImageZoomed && (
+                                <div className="p-4 text-center text-slate-400 text-[10px] font-bold">
+                                    <i className="fas fa-info-circle mr-1"></i> 마우스로 드래그하거나 터치하여 이동하며 확인하세요.
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
