@@ -5,9 +5,18 @@ import { DiscountType, PaymentMethod, SktPlan, SktDevice, CalculatorState, Devic
 const STORAGE_KEY_DEVICES = 'skt_opt_devices_v4';
 const STORAGE_KEY_PLANS = 'skt_opt_plans_v4';
 
-// [시스템 수정] 관리자 시크릿 이미지 & 비밀번호
-const SECRET_IMAGE_URL = 'https://i.postimg.cc/LXTM0WcZ/20260215.png'; 
+// [시스템 수정] 관리자 비밀번호
 const SECRET_PASSWORD = '6091'; 
+
+// [시스템 수정] ★ 분할된 이미지 주소를 여러 개 넣을 수 있는 배열 설정 ★
+// 작은따옴표('') 안에 주소를 넣고 쉼표(,)로 구분합니다.
+const SECRET_IMAGE_URLS = [
+  'https://i.imgur.com/71kLxj2.png',
+  'https://i.imgur.com/eD940yV.png', 
+  'https://i.imgur.com/5g5Y4r1.png',
+  'https://i.imgur.com/6e4f0dm.png',
+  'https://i.imgur.com/Fd4qAI7.png',
+];
 
 // [시스템 수정] Tally 폼 주소 연결
 const CONSULT_FORM_URL = 'https://tally.so/r/0Q64kA'; 
@@ -79,7 +88,6 @@ const App: React.FC = () => {
   const [loginId, setLoginId] = useState('');
   const [loginPw, setLoginPw] = useState('');
 
-  // [시스템 수정] 시크릿 팝업 제어
   const [showSecretModal, setShowSecretModal] = useState(false);
   const [secretPw, setSecretPw] = useState('');
   const [isSecretUnlocked, setIsSecretUnlocked] = useState(false);
@@ -326,7 +334,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* [시스템 수정] Secret Modal - 화질 개선 및 넓은 팝업 지원 */}
+      {/* [시스템 수정] Secret Modal - 여러 장의 이미지를 순서대로 렌더링하도록 수정 */}
       {showSecretModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-[2rem] w-full max-w-5xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden">
@@ -340,10 +348,9 @@ const App: React.FC = () => {
                     </button>
                 </div>
                 
-                {/* overflow-auto 로 상하좌우 스크롤 자연스럽게 허용 */}
-                <div className="flex-1 overflow-auto bg-slate-100">
+                <div className="flex-1 overflow-auto bg-slate-100 flex justify-center">
                     {!isSecretUnlocked ? (
-                        <div className="flex flex-col items-center justify-center h-full p-8 min-h-[300px]">
+                        <div className="flex flex-col items-center justify-center h-full p-8 min-h-[300px] w-full">
                             <div className="w-full max-w-sm space-y-6 text-center animate-in zoom-in duration-300">
                                 <div className="w-20 h-20 bg-slate-100 rounded-full mx-auto flex items-center justify-center text-slate-400 mb-4">
                                     <i className="fas fa-lock text-3xl"></i>
@@ -368,14 +375,17 @@ const App: React.FC = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="w-full h-full animate-in fade-in duration-500">
-                            {/* [핵심] min-w-[800px] 설정으로 이미지가 억지로 작아져 글씨가 깨지는 현상 차단 */}
-                            <img 
-                                src={SECRET_IMAGE_URL} 
-                                alt="Secret Content" 
-                                className="block w-full min-w-[800px] md:min-w-full h-auto mx-auto" 
-                                style={{ imageRendering: 'high-quality', WebkitFontSmoothing: 'antialiased' }}
-                            />
+                        <div className="w-full animate-in fade-in duration-500 flex flex-col items-center pb-8">
+                            {/* 배열에 있는 주소들을 하나씩 꺼내어 밑으로 쭉 이어붙입니다 */}
+                            {SECRET_IMAGE_URLS.map((url, index) => (
+                                <img 
+                                    key={index}
+                                    src={url} 
+                                    alt={`Secret Content ${index + 1}`} 
+                                    className="block w-full max-w-3xl h-auto" 
+                                    style={{ imageRendering: 'high-quality', WebkitFontSmoothing: 'antialiased' }}
+                                />
+                            ))}
                         </div>
                     )}
                 </div>
@@ -635,7 +645,7 @@ const App: React.FC = () => {
                   <div className="flex flex-col items-center justify-center pt-8 border-t-2 border-white/20"><span className="text-white/80 text-sm font-black uppercase tracking-widest mb-1">24개월 총 소요 비용</span><div className="text-3xl lg:text-4xl font-black drop-shadow-sm">{formatKrw(results.total2Year)}</div></div>
                   <div className="grid grid-cols-2 gap-6 pt-2"><div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 border border-white/20 shadow-inner"><span className="text-white/70 text-xs font-black block mb-2 uppercase tracking-tighter">월 단말기 납부액</span><span className="text-xl lg:text-2xl font-black">{formatKrw(results.monthlyInstallment)}</span></div><div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 border border-white/20 shadow-inner"><span className="text-white/70 text-xs font-black block mb-2 uppercase tracking-tighter">2년간 총 이자(5.9%)</span><span className="text-xl lg:text-2xl font-black">{formatKrw(results.totalInterest)}</span></div></div>
                   
-                  {/* [시스템 수정] 신청 버튼 영역 */}
+                  {/* 신청 버튼 영역 */}
                   <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/20">
                     <button 
                         onClick={() => setShowConsultModal(true)} 
