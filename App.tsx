@@ -9,7 +9,7 @@ const STORAGE_KEY_PLANS = 'skt_opt_plans_v4';
 const SECRET_IMAGE_URL = 'https://i.postimg.cc/LXTM0WcZ/20260215.png'; 
 const SECRET_PASSWORD = '6091'; 
 
-// [시스템 수정] Tally 폼 주소 연결 (대표님이 만드신 주소 적용 완료)
+// [시스템 수정] Tally 폼 주소 연결
 const CONSULT_FORM_URL = 'https://tally.so/r/0Q64kA'; 
 const PURCHASE_FORM_URL = 'https://tally.so/r/aQYWkZ'; 
 
@@ -79,11 +79,10 @@ const App: React.FC = () => {
   const [loginId, setLoginId] = useState('');
   const [loginPw, setLoginPw] = useState('');
 
-  // [시스템 수정] 시크릿/폼 모달 관련 State
+  // [시스템 수정] 시크릿 팝업 제어
   const [showSecretModal, setShowSecretModal] = useState(false);
   const [secretPw, setSecretPw] = useState('');
   const [isSecretUnlocked, setIsSecretUnlocked] = useState(false);
-  const [isImageZoomed, setIsImageZoomed] = useState(false);
   
   const [showConsultModal, setShowConsultModal] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
@@ -269,7 +268,6 @@ const App: React.FC = () => {
 
   const resetData = () => { if (confirm('⚠️ 모든 데이터를 초기 설정으로 되돌리시겠습니까?')) { localStorage.removeItem(STORAGE_KEY_DEVICES); localStorage.removeItem(STORAGE_KEY_PLANS); window.location.reload(); } };
 
-  // Common Modal Component for Forms (팝업 창 컴포넌트)
   const EmbedModal = ({ isOpen, onClose, title, url }: { isOpen: boolean; onClose: () => void; title: string; url: string }) => {
     if (!isOpen) return null;
     return (
@@ -328,21 +326,22 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* [시스템 수정] Secret Modal (잘림 방지 및 스크롤 개선 적용됨) */}
+      {/* [시스템 수정] Secret Modal - 화질 개선 및 넓은 팝업 지원 */}
       {showSecretModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-[2rem] w-full max-w-2xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden">
+            <div className="bg-white rounded-[2rem] w-full max-w-5xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden">
                 <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
                     <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
                         <i className="fas fa-user-secret text-slate-400"></i>
                         관리자 전용 뷰어
                     </h3>
-                    <button onClick={() => { setShowSecretModal(false); setIsSecretUnlocked(false); setSecretPw(''); setIsImageZoomed(false); }} className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-300 hover:text-slate-700 transition-colors">
+                    <button onClick={() => { setShowSecretModal(false); setIsSecretUnlocked(false); setSecretPw(''); }} className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-300 hover:text-slate-700 transition-colors">
                         <i className="fas fa-times text-lg"></i>
                     </button>
                 </div>
                 
-                <div className={`flex-1 overflow-y-auto ${isImageZoomed ? 'overflow-x-auto' : 'overflow-x-hidden'} bg-slate-50 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent`}>
+                {/* overflow-auto 로 상하좌우 스크롤 자연스럽게 허용 */}
+                <div className="flex-1 overflow-auto bg-slate-100">
                     {!isSecretUnlocked ? (
                         <div className="flex flex-col items-center justify-center h-full p-8 min-h-[300px]">
                             <div className="w-full max-w-sm space-y-6 text-center animate-in zoom-in duration-300">
@@ -369,44 +368,14 @@ const App: React.FC = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="relative min-h-full flex flex-col items-center">
-                            {/* Floating Controls */}
-                            <div className="sticky top-4 z-10 flex gap-2 mb-4">
-                                <button 
-                                    onClick={() => setIsImageZoomed(!isImageZoomed)}
-                                    className="px-4 py-2 bg-white/90 backdrop-blur shadow-lg rounded-full text-xs font-black text-slate-700 border border-slate-200 hover:bg-white transition-all flex items-center gap-2"
-                                >
-                                    <i className={`fas ${isImageZoomed ? 'fa-search-minus' : 'fa-search-plus'}`}></i>
-                                    {isImageZoomed ? '축소하기' : '확대해서 보기'}
-                                </button>
-                                <a 
-                                    href={SECRET_IMAGE_URL} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="px-4 py-2 bg-white/90 backdrop-blur shadow-lg rounded-full text-xs font-black text-slate-700 border border-slate-200 hover:bg-white transition-all flex items-center gap-2"
-                                >
-                                    <i className="fas fa-external-link-alt"></i>
-                                    원본 보기
-                                </a>
-                            </div>
-
-                            <div className={`w-full transition-all duration-300 ${isImageZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`} onClick={() => setIsImageZoomed(!isImageZoomed)}>
-                                <img 
-                                    src={SECRET_IMAGE_URL} 
-                                    alt="Secret Content" 
-                                    className={`block transition-all duration-300 ${isImageZoomed ? 'max-w-none w-[150%] sm:w-[200%]' : 'w-full h-auto'}`} 
-                                    style={{ 
-                                        imageRendering: 'high-quality',
-                                        WebkitFontSmoothing: 'antialiased'
-                                    }}
-                                />
-                            </div>
-                            
-                            {isImageZoomed && (
-                                <div className="p-4 text-center text-slate-400 text-[10px] font-bold">
-                                    <i className="fas fa-info-circle mr-1"></i> 마우스로 드래그하거나 터치하여 이동하며 확인하세요.
-                                </div>
-                            )}
+                        <div className="w-full h-full animate-in fade-in duration-500">
+                            {/* [핵심] min-w-[800px] 설정으로 이미지가 억지로 작아져 글씨가 깨지는 현상 차단 */}
+                            <img 
+                                src={SECRET_IMAGE_URL} 
+                                alt="Secret Content" 
+                                className="block w-full min-w-[800px] md:min-w-full h-auto mx-auto" 
+                                style={{ imageRendering: 'high-quality', WebkitFontSmoothing: 'antialiased' }}
+                            />
                         </div>
                     )}
                 </div>
@@ -414,7 +383,7 @@ const App: React.FC = () => {
         </div>
       )}
       
-      {/* [시스템 수정] Tally 폼 팝업 모달 */}
+      {/* Tally 폼 팝업 모달 */}
       <EmbedModal isOpen={showConsultModal} onClose={() => setShowConsultModal(false)} title="상담 신청" url={CONSULT_FORM_URL} />
       <EmbedModal isOpen={showPurchaseModal} onClose={() => setShowPurchaseModal(false)} title="구매 신청" url={PURCHASE_FORM_URL} />
 
@@ -666,7 +635,7 @@ const App: React.FC = () => {
                   <div className="flex flex-col items-center justify-center pt-8 border-t-2 border-white/20"><span className="text-white/80 text-sm font-black uppercase tracking-widest mb-1">24개월 총 소요 비용</span><div className="text-3xl lg:text-4xl font-black drop-shadow-sm">{formatKrw(results.total2Year)}</div></div>
                   <div className="grid grid-cols-2 gap-6 pt-2"><div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 border border-white/20 shadow-inner"><span className="text-white/70 text-xs font-black block mb-2 uppercase tracking-tighter">월 단말기 납부액</span><span className="text-xl lg:text-2xl font-black">{formatKrw(results.monthlyInstallment)}</span></div><div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 border border-white/20 shadow-inner"><span className="text-white/70 text-xs font-black block mb-2 uppercase tracking-tighter">2년간 총 이자(5.9%)</span><span className="text-xl lg:text-2xl font-black">{formatKrw(results.totalInterest)}</span></div></div>
                   
-                  {/* [시스템 수정] 신청 버튼 영역 추가 */}
+                  {/* [시스템 수정] 신청 버튼 영역 */}
                   <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/20">
                     <button 
                         onClick={() => setShowConsultModal(true)} 
