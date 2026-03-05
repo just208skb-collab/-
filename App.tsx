@@ -12,6 +12,7 @@ const SECRET_PASSWORD = '6091';
 // 작은따옴표('') 안에 주소를 넣고 쉼표(,)로 구분합니다.
 const SECRET_IMAGE_URLS = [
   'https://i.imgur.com/j6l355R.png',
+  'https://i.imgur.com/0JRIem9.png',
   'https://i.imgur.com/DgHBKjY.png', 
   'https://i.imgur.com/O8GtI1c.png',
   'https://i.imgur.com/tWmOFKQ.png',
